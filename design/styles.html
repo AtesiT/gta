@@ -26,11 +26,26 @@
   .pill{font:500 11px/1 ui-monospace,monospace;color:#b9b4a8;border:1px solid var(--line);padding:8px 11px;border-radius:999px;background:rgba(255,255,255,.02)}
   .toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font:500 11px/1 ui-monospace,monospace;color:#b9b4a8;border:1px solid var(--line);padding:8px 11px;border-radius:999px;background:rgba(255,255,255,.02);user-select:none}
   .toggle input{accent-color:var(--accent);margin:0}
+  .seg{display:inline-flex;background:#15151a;border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+  .seg button{appearance:none;border:0;background:transparent;color:#8f8a7f;font:600 11px/1 ui-monospace,monospace;
+        letter-spacing:.03em;padding:8px 12px;border-radius:999px;cursor:pointer;transition:background .15s,color .15s}
+  .seg button:hover{color:#d8d2c6}
+  .seg button.on{background:var(--accent);color:#17130c}
+  .compare{display:flex;align-items:center;gap:16px;margin-top:26px;flex-wrap:wrap;
+        border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(255,255,255,.02)}
+  .compare figure{margin:0;display:flex;flex-direction:column;gap:6px;align-items:center}
+  .compare canvas{width:160px;height:160px;border-radius:8px;box-shadow:0 10px 26px rgba(0,0,0,.5)}
+  .compare figcaption{font:600 9.5px/1 ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:#7d786e}
+  .compare .arrow{color:var(--accent);font-size:20px;opacity:.8}
+  .cmpnote{margin:0;flex:1;min-width:260px;font-size:12.5px;line-height:1.6;color:#8d8a82}
+  .cmpnote b{color:#cfcabf;font-weight:600}
   #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(452px,1fr));gap:26px;margin-top:38px}
   .card{background:linear-gradient(180deg,#141419 0%,#101013 100%);border:1px solid var(--line);border-radius:16px;padding:18px}
   .head{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
   .num{font:700 11px/1 ui-monospace,monospace;color:var(--accent);opacity:.9}
   .name{font-size:18px;font-weight:700;letter-spacing:-.01em}
+  .badge{margin-left:auto;font:600 9px/1 ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase;
+        color:#1b150d;background:linear-gradient(180deg,#f0c980,#dfa94b);padding:5px 8px;border-radius:999px}
   .shot{position:relative;width:100%;max-width:480px;margin:0 auto 14px;border-radius:8px;overflow:hidden;
         box-shadow:0 14px 34px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.07);background:#000;cursor:zoom-in}
   .shot canvas{width:100%;height:auto}
@@ -69,7 +84,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="kicker">Этап 1 · 10 визуальных систем · детальный пиксель</div>
+    <div class="kicker">Этап 1 · 10 визуальных систем · детальный пиксель · цветокорр «Долина»</div>
     <h1>Один квартал, десять техник</h1>
     <p class="lead">
       Каждый кадр — сетка <b>15 × 15 тайлов по 32 px</b>, разрешение сцены <b>480 × 480</b>.
@@ -80,11 +95,34 @@
       машина, дерево, гидрант, урна и масштабная линейка. Клик по кадру открывает его в 1 : 1.
     </p>
     <div class="bar">
+      <div class="seg" id="gradeSeg">
+        <button data-grade="none">Без грейда</button>
+        <button data-grade="valley" class="on">Цветокорр «Долина»</button>
+        <button data-grade="morning">Мягкое утро</button>
+        <button data-grade="dusk">Тёплый вечер</button>
+      </div>
       <label class="toggle"><input type="checkbox" id="gridToggle" /> сетка тайлов 32×32</label>
       <div class="pill">480 × 480 · без сглаживания</div>
       <div class="pill">тайл 32 × 32</div>
       <div class="pill">спрайты 30 × 48 · 72 × 114</div>
       <div class="pill">клик по кадру → 1 : 1</div>
+    </div>
+    <div class="compare">
+      <figure>
+        <canvas id="cmpBefore" width="160" height="160"></canvas>
+        <figcaption>до грейда</figcaption>
+      </figure>
+      <div class="arrow">→</div>
+      <figure>
+        <canvas id="cmpAfter" width="160" height="160"></canvas>
+        <figcaption id="cmpCap">после грейда</figcaption>
+      </figure>
+      <p class="cmpnote">
+        Грейд — общий пасс поверх всех техник: приподнятые холодные тени
+        (<b>синий</b>, а не чёрный), тёплые света, <b>+20 %</b> насыщенности в средних тонах,
+        мягкий контраст, запрет на чистый чёрный. Переключатели выше пересчитывают всю доску,
+        включая тайлсеты, спрайты и палитровые чипы.
+      </p>
     </div>
   </header>
   <main id="grid"></main>
@@ -1309,7 +1347,7 @@ const STYLES = [
 },
 {
   id:'xray', name:'Рентген', seed:33, block:1,
-  one:'Город на просвет: инвертированные тона, видны трубы, рёбра и пустоты внутри зданий.',
+  gradeScale:0.45, one:'Город на просвет: инвертированные тона, видны трубы, рёбра и пустоты внутри зданий.',
   chips:['#01050a','#04161e','#0b4453','#36b3c6','#8fe6f2','#eafcff'],
   meta:['сцена 480×480 · тайл 32×32','5 цветов · инверсия','свет снизу, скан-линии 4 px'],
   mode:'xray', gun:false,
@@ -1357,7 +1395,7 @@ const STYLES = [
 },
 {
   id:'paper', name:'Бумажный театр', seed:45, block:1,
-  one:'Плоские фигуры на картоне: один источник света, жёсткая офсетная тень, никаких контуров.',
+  gradeScale:0.9, one:'Плоские фигуры на картоне: один источник света, жёсткая офсетная тень, никаких контуров.',
   chips:['#cbb48c','#f4ead2','#c0483a','#3a6f96','#e5b23f','#5c8a5a','#2b2620'],
   meta:['сцена 480×480 · тайл 32×32','7 цветов · аппликация','тень +6/+8, без контуров'],
   mode:'flat', gun:true,
@@ -1402,7 +1440,7 @@ const STYLES = [
 },
 {
   id:'specimen', name:'Микропрепарат', seed:57, block:1,
-  one:'Капля города на предметном стекле: проходящий свет, всё полупрозрачное, видны ядра.',
+  gradeScale:0.55, one:'Капля города на предметном стекле: проходящий свет, всё полупрозрачное, видны ядра.',
   chips:['#e8f7f4','#a8d6d4','#6fa9ab','#6b3f96','#d0559b','#16222a'],
   meta:['сцена 480×480 · тайл 32×32','6 цветов · стекло и красители','свет снизу, без теней'],
   mode:'glass', gun:false,
@@ -1509,7 +1547,7 @@ const STYLES = [
 },
 {
   id:'chalk', name:'Мелом по асфальту', seed:81, block:1,
-  one:'Город, нарисованный детской рукой: крошащаяся линия, штриховка, мокрый асфальт.',
+  gradeScale:0.6, one:'Город, нарисованный детской рукой: крошащаяся линия, штриховка, мокрый асфальт.',
   chips:['#26262b','#f2efe4','#86d6d2','#e69ab7','#f2d873','#93a7e8'],
   meta:['сцена 480×480 · тайл 32×32','5 мелков по асфальту','дрожание линии, штриховая заливка'],
   mode:'chalk', gun:true,
@@ -1682,7 +1720,7 @@ const STYLES = [
 },
 {
   id:'stage', name:'Прожектор', seed:117, block:1,
-  one:'Криминальная сцена на чёрной сцене: только силуэты, хром и тонкий контровой свет.',
+  gradeScale:0.5, one:'Криминальная сцена на чёрной сцене: только силуэты, хром и тонкий контровой свет.',
   chips:['#08080b','#101a2e','#a83f6f','#e0a24b','#f2dfb2'],
   meta:['сцена 480×480 · тайл 32×32','5 цветов · силуэт + рим-лайт','один прожектор, чёрный пол'],
   mode:'sil', gun:true, rimSide:'right',
@@ -1807,12 +1845,196 @@ const STYLES = [
     refs:'Return of the Obra Dinn — старение изображения; NORCO — болотная палитра'
   }
 }
+,
+{
+  id:'valley', name:'Тёплый квартал', seed:141, block:1, bonus:true,
+  one:'Тот самый уютный цвет: тёплый камень, сочная зелень, синие тени и кремовые блики. Палитра собрана сразу под грейд «Долина».',
+  chips:['#8f4437','#c4685a','#d9a441','#6f9a56','#d3c4a2','#f4e6bf','#4f8b3c','#5b7d9e'],
+  meta:['сцена 480×480 · тайл 32×32','11 цветов · тёплый день','синие тени, кремовые света, без черноты'],
+  mode:'solid', gun:true, gradeScale:0.85,
+  sh:{dx:4,dy:5,color:'rgba(78,86,120,0.38)'},
+  c:{
+    bg:'#b99b6b', bgDark:'#7c6a4a', asph:'#84827a', patch:'#78766d', patchHi:'#95928a', patchLo:'#65635b',
+    paint:'#f4e6bf', paintLo:'#cbbb95', seam:'rgba(74,64,48,0.34)', crack:'rgba(96,84,64,0.42)',
+    walk:'#d8c9a6', walkHi:'#efe2c2', joint:'#b09c78', curb:'#c9b58d', curbHi:'#f6ebca', curbLo:'#947f5c',
+    gutter:'rgba(120,104,80,0.28)', water:'rgba(91,147,184,0.55)', waterHi:'rgba(168,211,230,0.55)',
+    manhole:'#6f6653', manholeRim:'#96896d', grate:'#5b5344', oil:'rgba(80,64,44,0.28)',
+    texHi:'#b0a488', texLo:'#6f6653', topHi:'rgba(255,248,225,0.18)',
+    roofA:'#b8493a', roofB:'#4d7f9e', roofC:'#d69a34', roofD:'#5b8c44',
+    parapet:'#e6d7b4', parapetLo:'#b8a684', gravelHi:'#d9c9a6', gravelLo:'#8a7c5e',
+    prop:'#cfc0a0', propTop:'#e2d3b4', propHi:'#f7ecd0', propLo:'#a8977a', propDark:'#6d6350',
+    grill:'#5b5344', grillDark:'#8d8168', tank:'#b8a684', tankTop:'#d9c9a6', tankRim:'#6f6653', tankLeg:'#7c6a4a',
+    glassRoof:'#9fc9d8', metal:'#b8a684', metalHi:'#e6d7b4', metalLo:'#8a7c5e',
+    moss:'#6f9a56', mossHi:'#9ec46f',
+    carBody:'#c4685a', carHi:'#dd8f80', carLo:'#8f4437', carHood:'#bd6252', carRoof:'#cf7d6d',
+    carGlass:'#7fa3ae', carGlassHi:'#cfe6ea', carOutline:'#4a3f33', carMirror:'#a24d3f',
+    chrome:'#f4e6bf', head:'#fff3c9', tail:'#a33c2f', tailHi:'#e08a70', plate:'#f4e6bf', plateInk:'#4a3f33',
+    tire:'#3f3b33', tireHi:'#55503f', hub:'#cfc0a0',
+    skin:'#e8b48c', hair:'#6b4a2f', coat:'#4f7bb0', coatHi:'#7ba0cc', leg:'#5b6f8f', shoe:'#4a3f33',
+    gun:'#4a3f33', outline:'#4a3f33',
+    lampBase:'#7c6a4a', lampPole:'#5b5344', lampHi:'#b8a684', lampHead:'#6d6350', lampGlass:'#ffe9b0', lampDark:'#4a3f33',
+    planter:'#8a7c5e', planterRim:'#6f6653', leaf:'#4f8b3c', leafHi:'#7fbb54', leafLo:'#3c6c2f',
+    fire:'#b85c4a', fireHi:'#dd8f80', fireDark:'#8f4437', bin:'#6f9a56', binLid:'#4f8b3c', binHi:'#9ec46f',
+    wood:'#a9744f', woodHi:'#c99a6e', woodDark:'#7c5533', meter:'#6d6350', meterFace:'#f4e6bf',
+    grass:'#6fae4e', grassHi:'#93cf63', grassLo:'#4b8036', veg:'#4f8b3c', vegHi:'#84c05a', vegLo:'#38662c',
+    alley:'#a68a5f', roofRim:'rgba(255,248,225,0.16)',
+    coatAlt:'#c4685a', coatAltHi:'#dd8f80', legAlt:'#6b5a44', hairAlt:'#c9a05a'
+  },
+  extra(a,M){
+    // мягкий солнечный свет и зелень у бордюров
+    a.ctx.save(); a.ctx.globalCompositeOperation='lighter';
+    glow(a,330,120,220,'#ffe3a8',0.12);
+    glow(a,150,400,200,'#ffe9bf',0.10);
+    a.ctx.restore();
+    // трава между плитами и цветы
+    for(let i=0;i<70;i++){
+      const side = a.rand()<0.5;
+      const x = side ? 116+a.rand()*32 : 332+a.rand()*32;
+      const y = a.rand()*S;
+      fpx(a,x,y, a.rand()<0.5?M.c.grassHi:M.c.grassLo);
+      if(a.rand()<0.12) fpx(a,x+1,y-1, a.rand()<0.5?'#e8879f':'#f2cf6b');
+    }
+    for(let i=0;i<26;i++){
+      const x = a.rand()<0.5 ? 118+a.rand()*28 : 334+a.rand()*28;
+      fpx(a,x,a.rand()*S,'#e8879f');
+    }
+    // светлые блики на крышах
+    for(let i=0;i<40;i++){
+      const R = ROOFS[(a.rand()*4)|0];
+      fpx(a, R.box[0]+a.rand()*R.box[2], R.box[1]+a.rand()*R.box[3], 'rgba(255,248,225,0.10)');
+    }
+  },
+  details:{
+    pixel:'сцена 480×480, тайл 32×32',
+    pal:'11 цветов: тёплый камень, кирпич, горчица, зелень, крем, пыльно-синий',
+    tech:'плоские заливки, мягкие кромки, ручной грейд поверх; никакой черноты — тени синие',
+    light:'высокий мягкий заполняющий свет: длинные тени в 4–5 px, блики кремовые, контраст низкий',
+    car:'пыльно-красный пикап с кремовым хромом и синеватым стеклом',
+    hero:'синяя рубашка, тёплые коричневые брюки, кремовый блик на волосах',
+    street:'тёплый мощёный асфальт, каменные плиты, горчичные и кирпичные крыши, зелень у бордюров',
+    refs:'Stardew Valley — общий грейд и уют; Graveyard Keeper — мягкие тёплые тени'
+  }
+}
 ];
+
+
+/* =========================================================================
+   6.5 ЦВЕТОКОРРЕКЦИЯ (грейд-пасс)
+   Общая логика «как в Stardew Valley»: приподнятые холодные тени,
+   тёплые света, сочные средние тона, мягкий контраст, никакой черноты.
+   ========================================================================= */
+const GRADES = {
+  none: {
+    id:'none', name:'Без грейда', hint:'исходные палитры стилей',
+    contrast:1.0, gamma:1.0, gain:[1,1,1], lift:[0,0,0], sat:1.0, split:0,
+    shadow:[0,0,0], high:[0,0,0], warm:[1,1,1], floor:0
+  },
+  valley: {
+    id:'valley', name:'Долина', hint:'тёплый день: холодные синие тени, кремовые света, сочная зелень',
+    contrast:1.06, gamma:0.96, gain:[1.03,1.005,0.955], lift:[0.055,0.050,0.042],
+    sat:1.20, split:0.052,
+    shadow:[-0.012,0.004,0.048], high:[0.050,0.022,-0.030],
+    warm:[1.015,1.0,0.975], floor:0.018
+  },
+  morning: {
+    id:'morning', name:'Мягкое утро', hint:'матовая пастель: приподнятые тени, молочные света, низкий контраст',
+    contrast:0.96, gamma:0.99, gain:[1.02,1.015,1.0], lift:[0.085,0.080,0.078],
+    sat:1.10, split:0.045,
+    shadow:[-0.005,0.006,0.038], high:[0.040,0.030,0.012],
+    warm:[1.01,1.0,0.99], floor:0.035
+  },
+  dusk: {
+    id:'dusk', name:'Тёплый вечер', hint:'золотой час: больше янтаря в светах, тени глубже и синее',
+    contrast:1.10, gamma:1.02, gain:[1.07,0.995,0.90], lift:[0.045,0.042,0.055],
+    sat:1.26, split:0.065,
+    shadow:[-0.02,0.0,0.055], high:[0.075,0.030,-0.045],
+    warm:[1.03,1.0,0.95], floor:0.015
+  }
+};
+
+function gradeClamp(v){ return v < 0 ? 0 : (v > 1 ? 1 : v); }
+
+function makeGrade(p){
+  const lutR = new Float32Array(256), lutG = new Float32Array(256), lutB = new Float32Array(256);
+  const shR = new Float32Array(256), shG = new Float32Array(256), shB = new Float32Array(256);
+  const hiR = new Float32Array(256), hiG = new Float32Array(256), hiB = new Float32Array(256);
+  for(let i=0;i<256;i++){
+    const v0 = i/255;
+    // контраст вокруг 0.45, затем лифт/гамма/гейн по каналам
+    const vc = gradeClamp((v0 - 0.45) * p.contrast + 0.45);
+    const chan = (g, gain, lift) => gradeClamp(gradeClamp(Math.pow(vc, p.gamma) * gain + lift));
+    lutR[i] = chan(0, p.gain[0], p.lift[0]);
+    lutG[i] = chan(1, p.gain[1], p.lift[1]);
+    lutB[i] = chan(2, p.gain[2], p.lift[2]);
+    // сплит-тонирование: холод в тенях, тепло в светах
+    const l = v0;
+    const ws = Math.pow(1-l, 2) * p.split;
+    const wh = Math.pow(l, 2) * p.split;
+    shR[i] = p.shadow[0]*ws; shG[i] = p.shadow[1]*ws; shB[i] = p.shadow[2]*ws;
+    hiR[i] = p.high[0]*wh;   hiG[i] = p.high[1]*wh;   hiB[i] = p.high[2]*wh;
+  }
+  return function(r,g,b){
+    // r,g,b — байты
+    let R = lutR[r], G = lutG[g], B = lutB[b];
+    const l = 0.2126*R + 0.7152*G + 0.0722*B;
+    R = l + (R-l)*p.sat;
+    G = l + (G-l)*p.sat;
+    B = l + (B-l)*p.sat;
+    const li = Math.max(0, Math.min(255, (l*255)|0));
+    R += shR[li] + hiR[li];
+    G += shG[li] + hiG[li];
+    B += shB[li] + hiB[li];
+    R *= p.warm[0]; G *= p.warm[1]; B *= p.warm[2];
+    if(p.floor){
+      R = p.floor + R*(1-p.floor);
+      G = p.floor + G*(1-p.floor);
+      B = p.floor + B*(1-p.floor);
+    }
+    return [gradeClamp(R)*255, gradeClamp(G)*255, gradeClamp(B)*255];
+  };
+}
+
+const GRADE_FN = {};
+Object.keys(GRADES).forEach(k => { GRADE_FN[k] = makeGrade(GRADES[k]); });
+
+function applyGrade(canvas, gradeId, scale){
+  if(!gradeId || gradeId === 'none') return canvas;
+  const fn = GRADE_FN[gradeId];
+  if(!fn) return canvas;
+  scale = (scale === undefined) ? 1 : scale;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const img = ctx.getImageData(0,0,w,h);
+  const d = img.data;
+  for(let i=0;i<d.length;i+=4){
+    const r0 = d[i], g0 = d[i+1], b0 = d[i+2];
+    const out = fn(r0,g0,b0);
+    d[i]   = r0 + (out[0]-r0)*scale;
+    d[i+1] = g0 + (out[1]-g0)*scale;
+    d[i+2] = b0 + (out[2]-b0)*scale;
+  }
+  ctx.putImageData(img,0,0);
+  return canvas;
+}
+
+function gradeHex(hex, gradeId, scale){
+  if(!gradeId || gradeId === 'none') return hex;
+  const fn = GRADE_FN[gradeId];
+  if(!fn) return hex;
+  if(typeof hex !== 'string' || hex.charAt(0) !== '#') return hex;
+  let h = hex.slice(1);
+  if(h.length === 3) h = h.split('').map(c=>c+c).join('');
+  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  const o = fn(r,g,b);
+  scale = (scale === undefined) ? 1 : scale;
+  const mixc = (a,c)=>Math.round(a + (c-a)*scale);
+  return rgb2hex(mixc(r,o[0]), mixc(g,o[1]), mixc(b,o[2]));
+}
 
 /* =========================================================================
    7. РЕНДЕР И UI
    ========================================================================= */
-function renderInto(style, kind){
+function renderInto(style, kind, gradeId){
   const dims = kind==='scene' ? [480,480] : (kind==='tiles' ? [480,96] : [480,160]);
   const cv = document.createElement('canvas');
   cv.width = dims[0]; cv.height = dims[1];
@@ -1822,6 +2044,7 @@ function renderInto(style, kind){
   if(kind==='scene') paintScene(a, style);
   else if(kind==='tiles') paintTiles(a, style);
   else paintSprites(a, style);
+  applyGrade(cv, gradeId, style.gradeScale);
   return cv;
 }
 //__ART_END__
@@ -1831,19 +2054,25 @@ STYLES.forEach(s=>{ DETAILS[s.id] = s.details; });
 
 const grid = document.getElementById('grid');
 let gridOn = false;
+let currentGrade = 'valley';
 const cardRefs = [];
 
-STYLES.forEach((style, i) => {
+function buildBoard(gradeId){
+  currentGrade = gradeId;
+  cardRefs.length = 0;
+  grid.innerHTML = '';
+  STYLES.forEach((style, i) => {
   const card = document.createElement('div');
   card.className = 'card';
 
   const head = document.createElement('div');
   head.className = 'head';
-  head.innerHTML = '<span class="num">' + String(i+1).padStart(2,'0') + '</span><span class="name">' + style.name + '</span>';
+  head.innerHTML = '<span class="num">' + String(i+1).padStart(2,'0') + '</span><span class="name">' + style.name + '</span>'
+    + (style.bonus ? '<span class="badge">бонус · палитра Stardew</span>' : '');
 
   const shot = document.createElement('div');
   shot.className = 'shot';
-  const scene = renderInto(style, 'scene');
+  const scene = renderInto(style, 'scene', gradeId);
   shot.appendChild(scene);
   const zoom = document.createElement('div');
   zoom.className = 'zoom';
@@ -1859,8 +2088,9 @@ STYLES.forEach((style, i) => {
   style.chips.forEach(c => {
     const chip = document.createElement('div');
     chip.className = 'chip';
-    chip.style.background = c;
-    chip.title = c;
+    const gc = gradeHex(c, gradeId, style.gradeScale);
+    chip.style.background = gc;
+    chip.title = (gc === c) ? c : (c + ' → ' + gc);
     chips.appendChild(chip);
   });
 
@@ -1868,13 +2098,13 @@ STYLES.forEach((style, i) => {
   tLabel.className = 'label'; tLabel.textContent = 'Тайлсет 32 × 32';
   const tiles = document.createElement('div');
   tiles.className = 'strip tiles';
-  tiles.appendChild(renderInto(style, 'tiles'));
+  tiles.appendChild(renderInto(style, 'tiles', gradeId));
 
   const sLabel = document.createElement('div');
   sLabel.className = 'label'; sLabel.textContent = 'Спрайты · 4 кадра ходьбы · машина 72 × 114';
   const sprites = document.createElement('div');
   sprites.className = 'strip';
-  sprites.appendChild(renderInto(style, 'sprites'));
+  sprites.appendChild(renderInto(style, 'sprites', gradeId));
 
   const meta = document.createElement('div');
   meta.className = 'meta';
@@ -1918,7 +2148,39 @@ STYLES.forEach((style, i) => {
   cardRefs.push({ style, scene, shot, tiles: tiles.firstChild, sprites: sprites.firstChild });
 
   shot.addEventListener('click', () => openLightbox(style, scene));
+  });
+}
+
+/* сравнение до/после на примере светлого стиля */
+function drawCompare(){
+  const sample = STYLES.filter(st => st.bonus)[0] || STYLES[0];
+  const put = (id, gradeId) => {
+    const cv = document.getElementById(id);
+    if(!cv || typeof cv.getContext !== 'function') return;
+    const ctx = cv.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0,0,160,160);
+    const full = renderInto(sample, 'scene', gradeId);
+    ctx.drawImage(full, 0, 0, 160, 160);
+  };
+  put('cmpBefore', 'none');
+  put('cmpAfter', currentGrade);
+  const cap = document.getElementById('cmpCap');
+  if(cap) cap.textContent = 'после: ' + (GRADES[currentGrade] ? GRADES[currentGrade].name.toLowerCase() : '—');
+}
+
+document.querySelectorAll('#gradeSeg button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#gradeSeg button').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    buildBoard(btn.dataset.grade);
+    drawCompare();
+    if(gridOn) requestAnimationFrame(() => document.getElementById('gridToggle').dispatchEvent(new Event('change')));
+  });
 });
+
+buildBoard(currentGrade);
+drawCompare();
 
 /* сетка тайлов поверх сцен */
 function drawTileGrid(style, canvas){

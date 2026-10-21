@@ -1,3 +1,8 @@
 
 # design archives / generated previews
 design/archive/
+
+# per-grade preview folders (regenerate with: node design/tools/preview.js)
+design/preview/valley/
+design/preview/morning/
+design/preview/dusk/

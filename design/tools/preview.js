@@ -113,6 +113,33 @@ class Ctx {
   createLinearGradient(x0, y0, x1, y1) { return new Grad('linear', [x0, y0, x1, y1]); }
   clearRect() {}
   beginPath() {} moveTo() {} lineTo() {} stroke() {}
+  getImageData(x, y, w, h) {
+    const out = new Uint8ClampedArray(w * h * 4);
+    for (let yy = 0; yy < h; yy++) {
+      for (let xx = 0; xx < w; xx++) {
+        const c = this.colorAt(x + xx, y + yy);
+        const o = (yy * w + xx) * 4;
+        out[o] = Math.max(0, Math.min(255, c[0]));
+        out[o + 1] = Math.max(0, Math.min(255, c[1]));
+        out[o + 2] = Math.max(0, Math.min(255, c[2]));
+        out[o + 3] = 255;
+      }
+    }
+    return { data: out, width: w, height: h };
+  }
+  putImageData(img, x, y) {
+    const w = img.width, h = img.height;
+    for (let yy = 0; yy < h; yy++) {
+      for (let xx = 0; xx < w; xx++) {
+        const o = (yy * w + xx) * 4;
+        const i = ((y + yy) * this.w + (x + xx)) * 3;
+        if (i < 0 || i + 2 >= this.data.length) continue;
+        this.data[i] = img.data[o];
+        this.data[i + 1] = img.data[o + 1];
+        this.data[i + 2] = img.data[o + 2];
+      }
+    }
+  }
 }
 
 function makeCanvas(w, h) {
@@ -122,10 +149,10 @@ function makeCanvas(w, h) {
 
 const sandbox = { console, Math, document: { createElement: () => makeCanvas(1, 1) } };
 vm.createContext(sandbox);
-vm.runInContext(script + '\n;globalThis.__DATA = { STYLES, paintScene, paintTiles, paintSprites, makeEnv };', sandbox);
-const { STYLES, paintScene, paintTiles, paintSprites, makeEnv } = sandbox.__DATA;
+vm.runInContext(script + '\n;globalThis.__DATA = { STYLES, paintScene, paintTiles, paintSprites, makeEnv, applyGrade, gradeHex, GRADES };', sandbox);
+const { STYLES, paintScene, paintTiles, paintSprites, makeEnv, applyGrade, GRADES } = sandbox.__DATA;
 
-function render(style, kind) {
+function render(style, kind, gradeId) {
   const dims = kind === 'scene' ? [480, 480] : (kind === 'tiles' ? [480, 96] : [480, 160]);
   const cv = makeCanvas(dims[0], dims[1]);
   const envSize = kind === 'tiles' ? 96 : (kind === 'sprites' ? 160 : 480);
@@ -133,6 +160,7 @@ function render(style, kind) {
   if (kind === 'scene') paintScene(a, style);
   else if (kind === 'tiles') paintTiles(a, style);
   else paintSprites(a, style);
+  if (gradeId) applyGrade(cv, gradeId, style.gradeScale);
   return cv;
 }
 
@@ -177,37 +205,81 @@ function writePNG(canvas, file) {
 }
 
 const outDir = path.join(ROOT, 'design/preview');
+const gradeDirs = {
+  valley: path.join(outDir, 'valley'),
+  morning: path.join(outDir, 'morning'),
+  dusk: path.join(outDir, 'dusk')
+};
 fs.mkdirSync(outDir, { recursive: true });
+Object.values(gradeDirs).forEach(d => fs.mkdirSync(d, { recursive: true }));
 
-const scenes = [];
-STYLES.forEach((style, i) => {
-  const scene = render(style, 'scene');
-  const tiles = render(style, 'tiles');
-  const sprites = render(style, 'sprites');
-  scenes.push(scene);
-  const base = String(i + 1).padStart(2, '0') + '-' + style.id;
-  writePNG(scene, path.join(outDir, base + '.png'));
-
+function cardFor(style, scene, tiles, sprites) {
   const card = makeCanvas(480, 480 + 8 + 96 + 8 + 160);
   const cctx = card.getContext('2d');
   cctx.fillStyle = '#0f0f12'; cctx.fillRect(0, 0, 480, card.height);
   cctx.drawImage(scene, 0, 0);
   cctx.drawImage(tiles, 0, 488);
   cctx.drawImage(sprites, 0, 592);
-  writePNG(card, path.join(outDir, base + '-card.png'));
+  return card;
+}
+
+function sheetFor(scenes, cols, cell) {
+  const GAP = 12;
+  const rows = Math.ceil(scenes.length / cols);
+  const W = cols * cell + (cols + 1) * GAP;
+  const H = rows * cell + (rows + 1) * GAP;
+  const sheet = makeCanvas(W, H);
+  const sctx = sheet.getContext('2d');
+  sctx.fillStyle = '#0f0f12'; sctx.fillRect(0, 0, W, H);
+  scenes.forEach((sc, i) => {
+    const cx = GAP + (i % cols) * (cell + GAP);
+    const cy = GAP + Math.floor(i / cols) * (cell + GAP);
+    sctx.drawImage(sc, cx, cy, cell, cell);
+  });
+  return sheet;
+}
+
+const raw = [];
+const graded = [];
+
+STYLES.forEach((style, i) => {
+  const base = String(i + 1).padStart(2, '0') + '-' + style.id;
+
+  const scene = render(style, 'scene');
+  const tiles = render(style, 'tiles');
+  const sprites = render(style, 'sprites');
+  raw.push(scene);
+  writePNG(scene, path.join(outDir, base + '.png'));
+  writePNG(cardFor(style, scene, tiles, sprites), path.join(outDir, base + '-card.png'));
+
+  const gScene = render(style, 'scene', 'valley');
+  graded.push(gScene);
+  Object.keys(gradeDirs).forEach(g => {
+    const gs = g === 'valley' ? gScene : render(style, 'scene', g);
+    const gt = render(style, 'tiles', g);
+    const gp = render(style, 'sprites', g);
+    writePNG(gs, path.join(gradeDirs[g], base + '.png'));
+    writePNG(cardFor(style, gs, gt, gp), path.join(gradeDirs[g], base + '-card.png'));
+  });
 });
 
-// contact sheet: 5 × 2, scenes at 384
-const CELL = 384, GAP = 12, COLS = 5;
-const W = COLS * CELL + (COLS + 1) * GAP;
-const H = 2 * CELL + 3 * GAP;
-const sheet = makeCanvas(W, H);
-const sctx = sheet.getContext('2d');
-sctx.fillStyle = '#0f0f12'; sctx.fillRect(0, 0, W, H);
-scenes.forEach((sc, i) => {
-  const cx = GAP + (i % COLS) * (CELL + GAP);
-  const cy = GAP + Math.floor(i / COLS) * (CELL + GAP);
-  sctx.drawImage(sc, cx, cy, CELL, CELL);
+writePNG(sheetFor(raw, 5, 384), path.join(outDir, 'contact-sheet.png'));
+writePNG(sheetFor(graded, 5, 384), path.join(outDir, 'contact-sheet-valley.png'));
+['morning','dusk'].forEach(g => {
+  const arr = STYLES.map(st => render(st, 'scene', g));
+  writePNG(sheetFor(arr, 5, 384), path.join(outDir, 'contact-sheet-' + g + '.png'));
 });
-writePNG(sheet, path.join(outDir, 'contact-sheet.png'));
-console.log('rendered', STYLES.length, 'styles ->', outDir, 'sheet', W + 'x' + H);
+
+// пара «до / после» для сравнения
+const PCELL = 320, PGAP = 10;
+const pair = makeCanvas(PCELL * 2 + PGAP * 3, Math.min(raw.length, 4) * (PCELL + PGAP) + PGAP);
+const pctx = pair.getContext('2d');
+pctx.fillStyle = '#0f0f12'; pctx.fillRect(0, 0, pair.width, pair.height);
+for (let i = 0; i < Math.min(raw.length, 4); i++) {
+  const y = PGAP + i * (PCELL + PGAP);
+  pctx.drawImage(raw[i], PGAP, y, PCELL, PCELL);
+  pctx.drawImage(graded[i], PGAP * 2 + PCELL, y, PCELL, PCELL);
+}
+writePNG(pair, path.join(outDir, 'compare-before-after.png'));
+
+console.log('rendered', STYLES.length, 'styles (raw + valley grade) ->', outDir);
