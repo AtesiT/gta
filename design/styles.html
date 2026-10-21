@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>10 визуальных решений · top-down GTA</title>
+<style>
+  :root{
+    --bg:#0a0a0c; --card:#121216; --line:#24242c; --txt:#e9e5dc; --dim:#8d8a82; --accent:#e0a24b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 600px at 15% -10%, #1b1b22 0%, #0a0a0c 55%) fixed;
+    color:var(--txt);
+    font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1200px;margin:0 auto;padding:56px 24px 96px}
+  .kicker{font:600 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.30em;color:var(--accent);text-transform:uppercase}
+  h1{font-size:clamp(30px,4.4vw,48px);line-height:1.02;margin:16px 0 14px;letter-spacing:-.025em;font-weight:750}
+  .lead{color:var(--dim);max-width:740px;font-size:15px;line-height:1.65;margin:0}
+  .lead b{color:#cfcabf;font-weight:600}
+  .bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+  .pill{font:500 11px/1 ui-monospace,monospace;color:#b9b4a8;border:1px solid var(--line);padding:8px 11px;border-radius:999px;background:rgba(255,255,255,.02)}
+  #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(296px,1fr));gap:22px;margin-top:40px}
+  .card{
+    background:linear-gradient(180deg,#141419 0%,#101013 100%);
+    border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;
+    transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+  }
+  .card:hover{transform:translateY(-3px);border-color:#3a3a46;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+  .head{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+  .num{font:700 11px/1 ui-monospace,monospace;color:var(--accent);opacity:.9}
+  .name{font-size:17px;font-weight:700;letter-spacing:-.01em}
+  .thumb{
+    width:200px;height:200px;margin:2px auto 14px;border-radius:9px;overflow:hidden;
+    box-shadow:0 12px 28px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.06);
+    background:#000;
+  }
+  .thumb canvas{width:200px;height:200px;display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+  .one{font-size:13px;line-height:1.5;color:#b9b4a7;margin:0 0 12px;min-height:38px}
+  .chips{display:flex;gap:4px;margin-bottom:10px}
+  .chip{width:22px;height:14px;border-radius:3px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.10)}
+  .meta{display:flex;flex-direction:column;gap:3px;font:500 10.5px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;color:#77746c;letter-spacing:.02em}
+  .meta span b{color:#a8a396;font-weight:600}
+
+  details.spec{margin-top:12px;border-top:1px solid #22222a;padding-top:10px}
+  details.spec summary{cursor:pointer;list-style:none;font:600 10.5px/1 ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:#8f8a7f}
+  details.spec summary::-webkit-details-marker{display:none}
+  details.spec summary:before{content:"+ ";color:var(--accent)}
+  details.spec[open] summary:before{content:"– "}
+  details.spec summary:hover{color:#d8d2c6}
+  details.spec dl{margin:10px 0 0;display:grid;grid-template-columns:74px 1fr;gap:6px 10px;font-size:11.5px;line-height:1.45;color:#a49f93}
+  details.spec dt{color:#6f6b62;font:600 10px/1.5 ui-monospace,monospace;text-transform:uppercase;letter-spacing:.05em}
+  details.spec dd{margin:0}
+  details.spec dd b{color:#d6d0c4;font-weight:600}
+  .refs{margin-top:8px;font-size:11px;color:#7d786e;line-height:1.5}
+  .refs i{color:#b8b2a4;font-style:normal}
+  footer{margin-top:52px;padding-top:22px;border-top:1px solid var(--line);color:#6a675f;font-size:12px;line-height:1.6}
+  @media (max-width:680px){.wrap{padding:34px 16px 64px}#grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Этап 1 · арт-дирекшн · 10 решений</div>
+    <h1>Как может выглядеть город сверху</h1>
+    <p class="lead">
+      Один и тот же кадр в десяти разных техниках: дорога с разметкой, тротуар, крыши зданий,
+      припаркованная машина и персонаж. Меняется только то, <b>как сделан пиксель</b>:
+      размер, палитра, контур, свет, тень и финальная обработка кадра.
+    </p>
+    <div class="bar">
+      <div class="pill">превью 200 × 200</div>
+      <div class="pill">без сглаживания</div>
+      <div class="pill">чистый top-down</div>
+      <div class="pill">этап дизайна · кода игры нет</div>
+    </div>
+  </header>
+  <main id="grid"></main>
+  <footer>
+    Все сцены отрисованы процедурно на Canvas: геометрия одна, визуальные системы — разные.
+    Открой исходник страницы, чтобы посмотреть параметры каждой техники.
+  </footer>
+</div>
+
+<script>
+/* =========================================================================
+   ОБЩИЕ УТИЛИТЫ
+   ========================================================================= */
+const BAYER4 = [0,8,2,10, 12,4,14,6, 3,11,1,9, 15,7,13,5];
+
+function hex2rgb(h){
+  h = h.replace('#','');
+  if(h.length === 3) h = h.split('').map(c=>c+c).join('');
+  return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+}
+function rgb2hex(r,g,b){
+  return '#' + [r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+}
+function mix(c1,c2,t){ const a=hex2rgb(c1), b=hex2rgb(c2); return rgb2hex(a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t); }
+function dark(c,t=0.25){ return mix(c,'#000000',t); }
+function light(c,t=0.3){ return mix(c,'#ffffff',t); }
+function rgba(hex,a){
+  if(typeof hex !== 'string') return 'rgba(255,0,255,1)';
+  if(hex.charAt(0) === '#'){
+    const c = hex2rgb(hex);
+    return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')';
+  }
+  const m = /rgba?\(([^)]+)\)/.exec(hex);
+  if(m){
+    const p = m[1].split(',').map(v=>parseFloat(v));
+    const base = p.length > 3 ? p[3] : 1;
+    return 'rgba('+p[0]+','+p[1]+','+p[2]+','+Math.min(a,base)+')';
+  }
+  return hex;
+}
+
+const LAY = {
+  road:[0.315,0,0.37,1],
+  swL:[0.253,0,0.062,1],
+  swR:[0.685,0,0.062,1],
+  bl1:[0.004,0.004,0.247,0.40],
+  bl2:[0.004,0.478,0.247,0.518],
+  br1:[0.749,0.004,0.247,0.52],
+  br2:[0.749,0.60,0.247,0.396],
+  car:[0.535,0.165,0.135,0.225],
+  hero:[0.251,0.283,0.060,0.098]
+};
+
+function makeEnv(ctx, S, seed){
+  let t = seed >>> 0;
+  const rand = () => {
+    t = (t + 0x6D2B79F5) >>> 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+  const n = v => Math.round(v * S);
+  const r = (x,y,w,h,c) => { if(c !== undefined) ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), Math.max(1,Math.round(w)), Math.max(1,Math.round(h))); };
+  const p = (x,y,c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), 1, 1); };
+  const rn = (x,y,w,h,c) => {
+    if(c !== undefined) ctx.fillStyle = c;
+    const X = n(x), Y = n(y);
+    ctx.fillRect(X, Y, Math.max(1, n(x+w)-X), Math.max(1, n(y+h)-Y));
+  };
+  const box = (b,c) => rn(b[0],b[1],b[2],b[3],c);
+  const hline = (x,y,w,c) => r(x,y,w,1,c);
+  const vline = (x,y,h,c) => r(x,y,1,h,c);
+  const disc = (cx,cy,rad,c) => {
+    ctx.fillStyle = c;
+    const x0 = Math.floor(cx-rad), x1 = Math.ceil(cx+rad), y0 = Math.floor(cy-rad), y1 = Math.ceil(cy+rad);
+    for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
+      const dx = x+0.5-cx, dy = y+0.5-cy;
+      if(dx*dx+dy*dy <= rad*rad) ctx.fillRect(x,y,1,1);
+    }
+  };
+  const ring = (cx,cy,rad,thick,c) => {
+    ctx.fillStyle = c;
+    const x0=Math.floor(cx-rad),x1=Math.ceil(cx+rad),y0=Math.floor(cy-rad),y1=Math.ceil(cy+rad);
+    for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
+      const d=Math.hypot(x+0.5-cx,y+0.5-cy);
+      if(d<=rad && d>rad-thick) ctx.fillRect(x,y,1,1);
+    }
+  };
+  const ell = (cx,cy,rx,ry,c) => {
+    ctx.fillStyle = c;
+    const x0=Math.floor(cx-rx),x1=Math.ceil(cx+rx),y0=Math.floor(cy-ry),y1=Math.ceil(cy+ry);
+    for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
+      const dx=(x+0.5-cx)/rx, dy=(y+0.5-cy)/ry;
+      if(dx*dx+dy*dy <= 1) ctx.fillRect(x,y,1,1);
+    }
+  };
+  const line = (x0,y0,x1,y1,w,c) => {
+    x0=Math.round(x0); y0=Math.round(y0); x1=Math.round(x1); y1=Math.round(y1);
+    const dx=Math.abs(x1-x0), dy=Math.abs(y1-y0), sx=x0<x1?1:-1, sy=y0<y1?1:-1;
+    let err=dx-dy; ctx.fillStyle=c;
+    const off=Math.floor((w-1)/2);
+    for(;;){
+      ctx.fillRect(x0-off, y0-off, w, w);
+      if(x0===x1 && y0===y1) break;
+      const e2=2*err;
+      if(e2>-dy){ err-=dy; x0+=sx; }
+      if(e2<dx){ err+=dx; y0+=sy; }
+    }
+  };
+  const poly = (pts,c) => {
+    ctx.fillStyle=c;
+    const P = pts.map(q=>[q[0]*S,q[1]*S]);
+    let minY=Math.floor(Math.min.apply(null,P.map(q=>q[1])));
+    let maxY=Math.ceil(Math.max.apply(null,P.map(q=>q[1])));
+    for(let y=minY;y<=maxY;y++){
+      const xs=[];
+      for(let i=0;i<P.length;i++){
+        const A=P[i], B=P[(i+1)%P.length];
+        if((A[1]<=y && B[1]>y) || (B[1]<=y && A[1]>y)){
+          xs.push(A[0] + (y-A[1])/(B[1]-A[1])*(B[0]-A[0]));
+        }
+      }
+      xs.sort((a,b)=>a-b);
+      for(let k=0;k+1<xs.length;k+=2){
+        const x0=Math.round(xs[k]), x1=Math.round(xs[k+1]);
+        if(x1>x0) ctx.fillRect(x0,y,x1-x0,1);
+      }
+    }
+  };
+  const bayer = (x,y)=>BAYER4[((y&3)<<2)|(x&3)]/16;
+  const grad = (cx,cy,r0,r1,stops) => {
+    const g = ctx.createRadialGradient(cx,cy,r0,cx,cy,r1);
+    stops.forEach(s=>g.addColorStop(s[0],s[1]));
+    return g;
+  };
+  return {ctx,S,rand,n,r,p,rn,box,hline,vline,disc,ring,ell,line,poly,bayer,grad};
+}
+
+function baseFill(a,c){ a.ctx.fillStyle=c; a.ctx.fillRect(0,0,a.S,a.S); }
+
+function speckle(a,count,colors,rect){
+  const S=a.S, area = rect || [0,0,1,1];
+  for(let i=0;i<count;i++){
+    const x=(area[0]+area[2]*a.rand())*S|0;
+    const y=(area[1]+area[3]*a.rand())*S|0;
+    a.p(x,y,colors[(a.rand()*colors.length)|0]);
+  }
+}
+
+/* силуэт персонажа сверху: голова, плечи, руки, ноги */
+function heroShape(a,b,o){
+  const x=b[0],y=b[1],w=b[2],h=b[3];
+  if(o.shadow) a.ell(a.n(x+w*0.56), a.n(y+h*0.80), a.n(w*0.55), a.n(h*0.24), o.shadow);
+  if(o.outline){
+    a.rn(x+w*0.10,y+h*0.56,w*0.34,h*0.44,o.outline);
+    a.rn(x+w*0.56,y+h*0.56,w*0.34,h*0.44,o.outline);
+    a.rn(x+w*0.12,y+h*0.22,w*0.76,h*0.42,o.outline);
+    a.rn(x+w*0.14,y+h*0.00,w*0.72,h*0.26,o.outline);
+  }
+  a.rn(x+w*0.16,y+h*0.58,w*0.24,h*0.36,o.leg);
+  a.rn(x+w*0.60,y+h*0.58,w*0.24,h*0.36,o.leg);
+  a.rn(x+w*0.20,y+h*0.30,w*0.60,h*0.32,o.body);
+  a.rn(x+w*0.04,y+h*0.33,w*0.16,h*0.22,o.arm||o.body);
+  a.rn(x+w*0.80,y+h*0.33,w*0.16,h*0.22,o.arm||o.body);
+  if(o.headRound){
+    a.disc(a.n(x+w*0.5),a.n(y+h*0.19),a.n(w*0.27),o.head);
+  }else{
+    a.rn(x+w*0.26,y+h*0.04,w*0.48,h*0.24,o.head);
+  }
+  if(o.hair) a.rn(x+w*0.28,y+h*0.06,w*0.44,h*0.07,o.hair);
+  if(o.rim) a.rn(x+w*0.83,y+h*0.31,0.008,h*0.22,o.rim);
+  if(o.detail) a.rn(x+w*0.40,y+h*0.40,w*0.20,h*0.05,o.detail);
+}
+
+/* корпус машины сверху, нос вверх */
+function carShape(a,b,o){
+  const x=b[0],y=b[1],w=b[2],h=b[3];
+  if(o.shadow) a.rn(x+0.012,y+0.016,w,h,o.shadow);
+  if(o.tyre){
+    a.rn(x-0.009,y+h*0.13,0.012,h*0.13,o.tyre);
+    a.rn(x+w-0.003,y+h*0.13,0.012,h*0.13,o.tyre);
+    a.rn(x-0.009,y+h*0.70,0.012,h*0.13,o.tyre);
+    a.rn(x+w-0.003,y+h*0.70,0.012,h*0.13,o.tyre);
+  }
+  a.rn(x,y+h*0.10,w,h*0.80,o.body);
+  a.rn(x+w*0.06,y+h*0.02,w*0.88,h*0.10,o.body);
+  a.rn(x+w*0.06,y+h*0.88,w*0.88,h*0.10,o.body);
+  if(o.outline){
+    a.rn(x,y+h*0.10,w,0.007,o.outline);
+    a.rn(x,y+h*0.88,w,0.007,o.outline);
+    a.rn(x,y+h*0.10,0.007,h*0.78,o.outline);
+    a.rn(x+w-0.007,y+h*0.10,0.007,h*0.78,o.outline);
+  }
+  a.rn(x+w*0.15,y+h*0.28,w*0.70,h*0.42,o.roof||o.body);
+  a.rn(x+w*0.17,y+h*0.29,w*0.66,h*0.11,o.glass);
+  a.rn(x+w*0.17,y+h*0.58,w*0.66,h*0.10,o.glass);
+  a.rn(x+0.008,y+h*0.13,0.006,h*0.55,o.hi||light(o.body,0.25));
+  if(o.hoodline) a.rn(x+w*0.14,y+h*0.22,w*0.72,0.007,o.hoodline);
+  a.rn(x+w*0.12,y+h*0.035,w*0.16,h*0.028,o.headlight);
+  a.rn(x+w*0.72,y+h*0.035,w*0.16,h*0.028,o.headlight);
+  a.rn(x+w*0.12,y+h*0.945,w*0.16,h*0.028,o.tail);
+  a.rn(x+w*0.72,y+h*0.945,w*0.16,h*0.028,o.tail);
+  a.rn(x-0.010,y+h*0.31,0.010,h*0.035,o.mirror||o.body);
+  a.rn(x+w,y+h*0.31,0.010,h*0.035,o.mirror||o.body);
+}
+
+/* фонарный столб сверху: база + консоль над дорогой */
+function streetLamp(a,x,y,c){
+  a.rn(x-0.09,y+0.006,0.09,0.008,c.arm);
+  a.rn(x-0.105,y-0.002,0.024,0.024,c.head);
+  a.rn(x-0.006,y+0.004,0.012,0.030,c.pole);
+}
+
+function vignette(a,color,alpha){
+  const g = a.grad(a.S/2,a.S/2,a.S*0.28,a.S*0.75,[[0,rgba(color,0)],[1,rgba(color,alpha)]]);
+  a.ctx.fillStyle = g;
+  a.ctx.fillRect(0,0,a.S,a.S);
+}
+
+function glowSpot(a,cx,cy,rad,color,alpha){
+  const g = a.grad(cx*a.S, cy*a.S, 0, rad*a.S, [
+    [0, rgba(color, alpha)],
+    [0.55, rgba(color, alpha*0.35)],
+    [1, rgba(color, 0)]
+  ]);
+  a.ctx.fillStyle = g;
+  a.ctx.fillRect(0,0,a.S,a.S);
+}
+
+/* =========================================================================
+   СТИЛЬ 01 · ЯНТАРНЫЙ ЗАЛИВ
+   ========================================================================= */
+function amberRoof(a,b,C){
+  const x=b[0],y=b[1],w=b[2],h=b[3];
+  a.rn(x,y,w,h,C.rust);
+  a.rn(x+w*0.06,y+h*0.03,w*0.88,h*0.94,C.orange);
+  a.rn(x+w*0.06,y+h*0.03,w*0.88,h*0.025,C.honey);
+  a.rn(x+w*0.06,y+h*0.945,w*0.88,h*0.025,C.deep);
+  a.rn(x+w*0.07,y+h*0.06,w*0.86,h*0.02,C.gold);
+  // кондиционеры
+  a.rn(x+w*0.13,y+h*0.17,w*0.25,h*0.12,C.gold);
+  a.rn(x+w*0.13,y+h*0.27,w*0.25,h*0.025,C.deep);
+  a.rn(x+w*0.15,y+h*0.19,w*0.09,h*0.06,C.cream);
+  a.rn(x+w*0.62,y+h*0.11,w*0.21,h*0.10,C.gold);
+  a.rn(x+w*0.62,y+h*0.19,w*0.21,h*0.025,C.deep);
+  // бак
+  const tx=x+w*0.68, ty=y+h*0.62, tr=w*0.12;
+  a.disc(a.n(tx),a.n(ty),a.n(tr),C.rust);
+  a.disc(a.n(tx)-1,a.n(ty)-1,a.n(tr*0.60),C.gold);
+  a.p(a.n(tx)-2,a.n(ty)-2,C.cream);
+  // вентиляция и янтарные капли
+  a.rn(x+w*0.28,y+h*0.60,w*0.06,h*0.06,C.deep);
+  a.rn(x+w*0.40,y+h*0.70,w*0.06,h*0.06,C.deep);
+  a.rn(x+w*0.07,y+h*0.05,w*0.012,h*0.13,C.gold);
+  a.p(a.n(x+w*0.20),a.n(y+h*0.50),C.cream);
+  a.p(a.n(x+w*0.52),a.n(y+h*0.34),C.cream);
+}
+
+function amberCar(a,b,C){
+  const x=b[0],y=b[1],w=b[2],h=b[3];
+  carShape(a,b,{
+    shadow:'rgba(21,6,2,0.45)',
+    body:C.orange, roof:C.honey, glass:C.deep,
+    headlight:C.cream, tail:C.rust, outline:C.dark,
+    hi:C.gold, tyre:C.dark, hoodline:C.rust
+  });
+  // смоляной блик по капоту и тёплый контур
+  a.rn(x+w*0.20,y+h*0.175,w*0.34,h*0.022,'rgba(255,243,207,0.55)');
+  a.rn(x+w*0.17,y+h*0.295,w*0.22,h*0.045,'rgba(255,210,122,0.30)');
+  a.rn(x+w*0.30,y+h*0.11,w*0.40,0.006,'rgba(255,210,122,0.45)');
+}
+
+/* =========================================================================
+   СТИЛЬ 02 · РЕНТГЕН
+   ========================================================================= */
+function xrayRoof(a,b,C){
+  const x=b[0],y=b[1],w=b[2],h=b[3];
+  a.rn(x,y,w,h,'rgba(143,230,242,0.09)');
+  a.rn(x,y,w,0.006,C.ice);
+  a.rn(x,y+h-0.006,w,0.006,C.cyan);
+  a.rn(x,y,0.006,h,'rgba(143,230,242,0.5)');
+  a.rn(x+w-0.006,y,0.006,h,C.cyan);
+  for(let i=0;i<4;i++) a.rn(x+w*0.16+i*w*0.19,y+h*0.05,0.004,h*0.90,'rgba(143,230,242,0.20)');
+  a.rn(x+w*0.12,y+h*0.13,w*0.36,h*0.24,'rgba(54,179,198,0.16)');
+  a.rn(x+w*0.12,y+h*0.13,w*0.36,0.005,C.ice);
+  a.rn(x+w*0.58,y+h*0.14,w*0.26,h*0.13,'rgba(143,230,242,0.22)');
+  a.rn(x+w*0.58,y+h*0.14,w*0.26,0.005,C.ice);
+  a.disc(a.n(x+w*0.71),a.n(y+h*0.205),a.n(w*0.045),C.black);
+  a.disc(a.n(x+w*0.71),a.n(y+h*0.205),a.n(w*0.036),C.ice);
+  a.disc(a.n(x+w*0.71),a.n(y+h*0.205),a.n(w*0.020),C.black);
+  const tx=x+w*0.66,ty=y+h*0.63,tr=w*0.11;
+  a.disc(a.n(tx),a.n(ty),a.n(tr),C.cyan);
+  a.disc(a.n(tx),a.n(ty),a.n(tr*0.80),C.black);
+  a.disc(a.n(tx),a.n(ty),a.n(tr*0.55),'rgba(143,230,242,0.30)');
+  for(let i=0;i<3;i++) a.rn(x+w*0.13,y+h*(0.50+i*0.14),w*0.4,0.004,'rgba(143,230,242,0.35)');
+}
+
+/* =========================================================================
+   СТИЛЬ 03 · БУМАЖНЫЙ ТЕАТР
+   ========================================================================= */
+function paperBlock(a,b,color,C){
+  const x=b[0],y=b[1],w=b[2],h=b[3];
+  a.rn(x+0.016,y+0.019,w,h,'rgba(19,15,13,0.62)');
+  a.rn(x,y,w,h,color);
+  a.rn(x,y,w,0.008,light(color,0.16));
+  a.rn(x,y,0.008,h,light(color,0.10));
+  const wc = dark(color,0.20);
+  for(let i=0;i<3;i++) for(let j=0;j<4;j++){
+    a.rn(x+w*(0.13+i*0.28), y+h*(0.09+j*0.215), w*0.14, h*0.085, wc);
+    a.rn(x+w*(0.13+i*0.28), y+h*(0.09+j*0.215), w*0.14, 0.004, 'rgba(255,255,255,0.22)');
+  }
+  a.rn(x+w*0.63,y+h*0.60,w*0.25,h*0.15,dark(color,0.10));
+  a.rn(x+w*0.63,y+h*0.60,w*0.25,0.006,light(color,0.24));
+  a.rn(x+w*0.30,y+h*0.74,w*0.18,w*0.18,dark(color,0.28));
+}
+
+/* =========================================================================
+   СТИЛЬ 04 · МИКРОПРЕПАРАТ
+   ========================================================================= */
+function specimenRoof(a,b,C){
+  const x=b[0],y=b[1],w=b[2],h=b[3];
+  a.rn(x,y,w,h,'rgba(72,132,136,0.75)');
+  a.rn(x+w*0.02,y+h*0.02,w*0.96,h*0.96,'rgba(226,246,242,0.92)');
+  a.rn(x+w*0.02,y+h*0.02,w*0.96,h*0.10,'rgba(72,132,136,0.30)');
+  a.rn(x+w*0.02,y+h*0.82,w*0.96,h*0.16,'rgba(72,132,136,0.22)');
+  a.rn(x,y,w,0.006,C.ink);
+  a.rn(x,y,0.006,h,C.ink);
+  a.rn(x,y+h-0.004,w,0.004,'rgba(22,34,42,0.55)');
+  a.rn(x+w-0.004,y,0.004,h,'rgba(22,34,42,0.55)');
+  // органеллы
+  for(let i=0;i<4;i++){
+    const cx=x+w*(0.18+0.22*i), cy=y+h*(0.30+0.32*((i%2)?0.85:0.1));
+    a.ell(a.n(cx),a.n(cy),a.n(w*0.10),a.n(w*0.08),rgba(C.violet,0.35));
+    a.p(a.n(cx)+1,a.n(cy),C.magenta);
+  }
+  a.ring(a.n(x+w*0.5),a.n(y+h*0.7),a.n(w*0.13),1,'rgba(107,63,150,0.35)');
+  for(let i=0;i<14;i++) a.p((x+w*a.rand())*a.S|0,(y+h*a.rand())*a.S|0,'rgba(22,34,42,0.22)');
+}
+
+/* =========================================================================
+   СТИЛЬ 05 · СОЛНЕЧНЫЙ УДАР
+   ========================================================================= */
+function heatRoof(a,b,color,C,shade){
+  const x=b[0],y=b[1],w=b[2],h=b[3];
+  a.rn(x,y,w,h,color);
+  a.rn(x,y,w,0.008,light(color,0.25));
+  a.rn(x+w-0.008,y,0.008,h,dark(color,0.10));
+  for(let i=0;i<3;i++) for(let j=0;j<3;j++){
+    a.rn(x+w*(0.14+i*0.28), y+h*(0.13+j*0.26), w*0.15, h*0.10, shade);
+  }
+  a.rn(x+w*0.62,y+h*0.62,w*0.24,h*0.14,'rgba(255,255,255,0.55)');
+  a.rn(x+w*0.62,y+h*0.62,w*0.24,0.006,'rgba(255,255,255,0.9)');
+}
+
+/* =========================================================================
+   СТИЛЬ 06 · МЕЛОМ ПО АСФАЛЬТУ
+   ========================================================================= */
+function chalkLine(a,x0,y0,x1,y1,c,jitter){
+  const j = jitter===undefined ? 0.6 : jitter;
+  a.line(a.n(x0)+a.rand()*j, a.n(y0)+a.rand()*j, a.n(x1)+a.rand()*j, a.n(y1)+a.rand()*j, 1, c);
+}
+function chalkRect(a,x,y,w,h,c){
+  const S=a.S;
+  chalkLine(a,x,y,x+w,y,c); chalkLine(a,x+w,y,x+w,y+h,c);
+  chalkLine(a,x+w,y+h,x,y+h,c); chalkLine(a,x,y+h,x,y,c);
+  // штриховка
+  for(let i=0;i<10;i++){
+    const t=a.rand(), xx=x+w*t, yy=y+h*0.15;
+    a.line(a.n(xx),a.n(yy),a.n(xx+w*0.14),a.n(yy+h*0.55),1,rgba(c,0.35));
+  }
+}
+
+/* =========================================================================
+   СТИЛЬ 08 · ЖЕЛЕЗОБЕТОННЫЙ САД
+   ========================================================================= */
+function mossPatch(a,cx,cy,rad,C){
+  for(let i=0;i<40;i++){
+    const ang=a.rand()*Math.PI*2, rr=a.rand()*rad;
+    const x=cx+Math.cos(ang)*rr*a.S, y=cy+Math.sin(ang)*rr*a.S*0.7;
+    a.p(x,y,a.rand()<0.5?C.moss:C.acid);
+  }
+  a.ell(a.n(cx),a.n(cy),a.n(rad*0.65),a.n(rad*0.42),rgba(C.moss,0.45));
+}
+
+/* =========================================================================
+   СТИЛИ
+   ========================================================================= */
+const STYLES = [
+{
+  id:'amber', name:'Янтарный залив', one:'Город, залитый смолой: свет идёт изнутри, всё кажется законсервированным.',
+  chips:['#150602','#3a1204','#94400f','#c4691c','#eaa63c','#fff3cf'],
+  meta:['пиксель 4×4','6 цветов · янтарная шкала','свет внутренний, блики-капли'],
+  S:100, block:2, seed:11,
+  draw(a){
+    const C={dark:'#150602',deep:'#3a1204',mid:'#6d2a0a',rust:'#94400f',orange:'#c4691c',honey:'#eaa63c',gold:'#ffd27a',cream:'#fff3cf'};
+    const S=a.S;
+    baseFill(a,C.mid);
+    speckle(a,S*S*0.10,[C.deep,C.rust]);
+    a.rn(0.315,0,0.37,1,C.deep);
+    a.rn(0.315,0,0.004,1,C.orange);
+    a.rn(0.681,0,0.004,1,C.orange);
+    for(let i=0;i<16;i++) a.p((0.32+a.rand()*0.36)*S,a.rand()*S, a.rand()<0.3?C.gold:C.rust);
+    for(let y=0.03;y<0.97;y+=0.14){
+      a.rn(0.488,y+0.010,0.024,0.058,C.orange);
+      a.rn(0.490,y,0.020,0.062,C.gold);
+    }
+    for(let i=0;i<8;i++){
+      a.rn(0.324+i*0.0442,0.79,0.026,0.088,C.honey);
+      a.rn(0.326+i*0.0442,0.793,0.018,0.082,C.gold);
+    }
+    a.rn(0.253,0,0.062,1,'#a4520e');
+    a.rn(0.685,0,0.062,1,'#a4520e');
+    speckle(a,S*S*0.012,[C.rust,C.orange],[0.253,0,0.062,1]);
+    speckle(a,S*S*0.012,[C.rust,C.orange],[0.685,0,0.062,1]);
+    a.rn(0.309,0,0.006,1,C.honey);
+    a.rn(0.685,0,0.006,1,C.honey);
+    for(let y=0;y<0.99;y+=0.085){
+      a.rn(0.253,y,0.062,0.005,'#7a350a');
+      a.rn(0.685,y,0.062,0.005,'#7a350a');
+    }
+    amberRoof(a,LAY.bl1,C); amberRoof(a,LAY.bl2,C);
+    amberRoof(a,LAY.br1,C); amberRoof(a,LAY.br2,C);
+    amberCar(a,LAY.car,C);
+    heroShape(a,LAY.hero,{shadow:'rgba(21,6,2,0.55)',outline:C.deep,leg:C.rust,body:C.cream,arm:C.honey,head:'#ffe0a8',hair:C.rust,headRound:true,detail:C.orange});
+    streetLamp(a,0.700,0.13,{arm:C.rust,head:C.gold,pole:C.deep});
+    streetLamp(a,0.700,0.60,{arm:C.rust,head:C.gold,pole:C.deep});
+    a.ctx.save();
+    a.ctx.globalCompositeOperation='lighter';
+    glowSpot(a,0.60,0.30,0.115,'#ffbe50',0.30);
+    glowSpot(a,0.700,0.62,0.10,'#ffaa3c',0.28);
+    a.ctx.restore();
+    for(let i=0;i<40;i++) a.p(a.rand()*S,a.rand()*S,rgba(C.cream,0.22));
+  }
+},
+{
+  id:'xray', name:'Рентген', one:'Город на просвет: инвертированные тона, видны трубы и рёбра зданий.',
+  chips:['#01050a','#04161e','#36b3c6','#8fe6f2','#eafcff'],
+  meta:['пиксель 2×2','5 цветов · инверсия','свет из-под сцены, свечение контуров'],
+  S:100, block:1, seed:23,
+  draw(a){
+    const C={black:'#01050a',deep:'#04161e',teal:'#0b4453',cyan:'#36b3c6',ice:'#8fe6f2',white:'#eafcff'};
+    const S=a.S;
+    baseFill(a,C.black);
+    for(let i=0;i<S;i+=10){ a.r(i,0,1,S,'#03161e'); a.r(0,i,S,1,'#03161e'); }
+    // дорога: чёрная, светятся только швы
+    a.rn(0.315,0,0.37,1,'#02090d');
+    a.rn(0.315,0,0.004,1,C.teal);
+    a.rn(0.681,0,0.004,1,C.teal);
+    for(let i=0;i<26;i++){
+      const x=(0.32+a.rand()*0.36)*S, y=a.rand()*S;
+      a.p(x,y,'rgba(54,179,198,0.35)');
+    }
+    for(let y=0.02;y<0.98;y+=0.14){
+      a.rn(0.487,y,0.026,0.062,C.cyan);
+      a.rn(0.491,y+0.006,0.018,0.050,C.black);
+    }
+    for(let i=0;i<8;i++){
+      a.rn(0.322+i*0.0442,0.785,0.028,0.095,C.cyan);
+      a.rn(0.327+i*0.0442,0.788,0.018,0.089,C.black);
+    }
+    // тротуары
+    a.rn(0.253,0,0.062,1,'#051e27');
+    a.rn(0.685,0,0.062,1,'#051e27');
+    for(let y=0;y<1;y+=0.075){
+      a.rn(0.253,y,0.062,0.004,'rgba(54,179,198,0.55)');
+      a.rn(0.685,y,0.062,0.004,'rgba(54,179,198,0.55)');
+    }
+    a.rn(0.309,0,0.004,1,C.ice);
+    a.rn(0.685,0,0.004,1,C.ice);
+    xrayRoof(a,LAY.bl1,C); xrayRoof(a,LAY.bl2,C);
+    xrayRoof(a,LAY.br1,C); xrayRoof(a,LAY.br2,C);
+    // машина-скелет
+    const b=LAY.car, x=b[0],y=b[1],w=b[2],h=b[3];
+    a.rn(x,y+h*0.10,w,h*0.80,'rgba(54,179,198,0.10)');
+    a.rn(x,y+h*0.10,w,0.006,C.ice);
+    a.rn(x,y+h*0.88,w,0.006,C.ice);
+    a.rn(x,y+h*0.10,0.006,h*0.78,C.cyan);
+    a.rn(x+w-0.006,y+h*0.10,0.006,h*0.78,C.cyan);
+    a.rn(x+w*0.12,y+h*0.24,w*0.26,h*0.20,'rgba(143,230,242,0.45)');
+    a.rn(x+w*0.20,y+h*0.47,w*0.60,h*0.10,C.cyan);
+    a.rn(x+w*0.18,y+h*0.62,w*0.64,h*0.10,'rgba(143,230,242,0.25)');
+    a.disc(a.n(x+w*0.30),a.n(y+h*0.34),a.n(w*0.09),C.white);
+    a.rn(x+w*0.44,y+h*0.14,w*0.12,h*0.66,C.cyan);
+    a.rn(x+w*0.12,y+h*0.035,w*0.16,h*0.026,C.white);
+    a.rn(x+w*0.72,y+h*0.035,w*0.16,h*0.026,C.white);
+    a.rn(x-0.008,y+h*0.16,0.010,h*0.10,C.cyan);
+    a.rn(x+w-0.002,y+h*0.16,0.010,h*0.10,C.cyan);
+    // человек-скелет
+    const hb=LAY.hero;
+    heroShape(a,hb,{leg:C.ice,body:'rgba(143,230,242,0.35)',head:C.white,headRound:true,rim:C.white});
+    a.rn(hb[0]+hb[2]*0.30,hb[1]+hb[3]*0.44,0.014,0.012,C.cyan);
+    a.ctx.save();
+    a.ctx.globalCompositeOperation='lighter';
+    glowSpot(a,0.30,0.32,0.10,'#8fe6f2',0.18);
+    glowSpot(a,0.60,0.26,0.14,'#36b3c6',0.14);
+    a.ctx.restore();
+    for(let y=0;y<S;y+=4){ a.hline(0,y,S,'rgba(0,0,0,0.28)'); }
+  }
+},
+{
+  id:'paper', name:'Бумажный театр', one:'Плоские фигуры на картоне: один источник света, жёсткая офсетная тень.',
+  chips:['#cbb48c','#f4ead2','#c0483a','#3a6f96','#e5b23f','#5c8a5a'],
+  meta:['пиксель 4×4','6 цветов · аппликация','жёсткая тень +2 px, без контуров'],
+  S:100, block:2, seed:31,
+  draw(a){
+    const C={board:'#cbb48c',boardD:'#b49b74',cream:'#f4ead2',ink:'#1b1513',red:'#c0483a',blue:'#3a6f96',yellow:'#e5b23f',green:'#5c8a5a'};
+    const S=a.S;
+    baseFill(a,C.board);
+    speckle(a,S*S*0.30,[C.boardD,'#d6c7a6','#c2ab84']);
+    // дорога — тёмный лист
+    a.rn(0.315,0,0.37,1,'#39352f');
+    for(let y=0.05;y<0.98;y+=0.15) a.rn(0.478,y,0.034,0.075,C.cream);
+    for(let i=0;i<8;i++) a.rn(0.322+i*0.0442,0.79,0.028,0.092,C.cream);
+    a.rn(0.253,0,0.062,1,C.cream);
+    a.rn(0.685,0,0.062,1,C.cream);
+    a.rn(0.309,0,0.006,1,'#b3a488');
+    a.rn(0.685,0,0.006,1,'#b3a488');
+    paperBlock(a,LAY.bl1,C.red,C);
+    paperBlock(a,LAY.bl2,C.blue,C);
+    paperBlock(a,LAY.br1,C.yellow,C);
+    paperBlock(a,LAY.br2,C.green,C);
+    // машина — согнутый лист
+    const b=LAY.car,x=b[0],y=b[1],w=b[2],h=b[3];
+    a.rn(x+0.016,y+0.020,w,h*0.96,'rgba(19,15,13,0.62)');
+    a.rn(x,y+h*0.10,w,h*0.80,'#d9614a');
+    a.rn(x+w*0.08,y+h*0.02,w*0.84,h*0.10,'#d9614a');
+    a.rn(x+w*0.08,y+h*0.88,w*0.84,h*0.10,'#d9614a');
+    a.rn(x,y+h*0.10,w*0.10,h*0.80,'#e97f5f');
+    a.rn(x+w*0.15,y+h*0.27,w*0.70,h*0.44,C.cream);
+    a.rn(x+w*0.18,y+h*0.29,w*0.64,h*0.12,'#37616f');
+    a.rn(x+w*0.18,y+h*0.58,w*0.64,h*0.10,'#37616f');
+    a.rn(x+w*0.13,y+h*0.045,w*0.15,h*0.025,C.yellow);
+    a.rn(x+w*0.72,y+h*0.045,w*0.15,h*0.025,C.yellow);
+    a.rn(x-0.010,y+h*0.30,0.012,h*0.04,'#d9614a');
+    // персонаж-марионетка
+    heroShape(a,LAY.hero,{shadow:'rgba(19,15,13,0.55)',leg:'#2f2a26',body:C.blue,arm:C.blue,head:C.cream,hair:'#2f2a26',headRound:true,detail:C.red});
+    a.rn(LAY.hero[0]+0.012,LAY.hero[1]+0.030,0.022,0.010,C.red);
+    // пылинки картона
+    speckle(a,90,['rgba(255,255,255,0.14)','rgba(0,0,0,0.10)']);
+  }
+},
+{
+  id:'specimen', name:'Микропрепарат', one:'Капля города на предметном стекле: проходящий свет, всё полупрозрачное.',
+  chips:['#e8f7f4','#a8d6d4','#6fa9ab','#6b3f96','#d0559b','#16222a'],
+  meta:['пиксель 1×1','6 цветов · стекло и красители','свет снизу, без теней, рефракция'],
+  S:200, block:1, seed:43,
+  draw(a){
+    const C={glass:'#e8f7f4',pale:'#cfeae7',mid:'#a8d6d4',deep:'#6fa9ab',violet:'#6b3f96',magenta:'#d0559b',ink:'#16222a'};
+    const S=a.S;
+    const g = a.ctx.createLinearGradient(0,0,S,S);
+    g.addColorStop(0,'#dff4f0'); g.addColorStop(0.5,'#a8d8d4'); g.addColorStop(1,'#6fa9ab');
+    a.ctx.fillStyle=g; a.ctx.fillRect(0,0,S,S);
+    // сетка предметного стекла
+    for(let i=0;i<S;i+=24){
+      a.r(i,0,1,S,'rgba(111,169,171,0.10)');
+      a.r(0,i,S,1,'rgba(111,169,171,0.10)');
+    }
+    // дорога: прозрачный канал
+    a.rn(0.315,0,0.37,1,'rgba(111,169,171,0.55)');
+    a.rn(0.315,0,0.004,1,'rgba(255,255,255,0.95)');
+    a.rn(0.681,0,0.004,1,'rgba(255,255,255,0.95)');
+    for(let i=0;i<120;i++) a.p((0.32+a.rand()*0.36)*S,a.rand()*S,rgba(C.deep,0.30));
+    for(let y=0.03;y<0.98;y+=0.14){
+      a.rn(0.487,y,0.026,0.062,'rgba(232,247,244,0.85)');
+      a.rn(0.491,y+0.005,0.018,0.052,'rgba(168,214,212,0.30)');
+    }
+    for(let i=0;i<8;i++) a.rn(0.322+i*0.0442,0.785,0.028,0.095,'rgba(232,247,244,0.85)');
+    // тротуары
+    a.rn(0.253,0,0.062,1,'rgba(207,234,231,0.80)');
+    a.rn(0.685,0,0.062,1,'rgba(207,234,231,0.80)');
+    for(let y=0;y<S;y+=16){
+      a.r(a.n(0.253),y,a.n(0.062),2,'rgba(90,143,146,0.55)');
+      a.r(a.n(0.685),y,a.n(0.062),2,'rgba(90,143,146,0.55)');
+    }
+    a.rn(0.309,0,0.004,1,'rgba(255,255,255,0.85)');
+    a.rn(0.685,0,0.004,1,'rgba(255,255,255,0.85)');
+    specimenRoof(a,LAY.bl1,C); specimenRoof(a,LAY.bl2,C);
+    specimenRoof(a,LAY.br1,C); specimenRoof(a,LAY.br2,C);
+    // машина-оболочка
+    const b=LAY.car,x=b[0],y=b[1],w=b[2],h=b[3];
+    a.rn(x,y+h*0.10,w,h*0.80,'rgba(240,252,249,0.92)');
+    a.rn(x,y+h*0.10,w,0.008,C.ink);
+    a.rn(x,y+h*0.88,w,0.008,C.ink);
+    a.rn(x+w-0.006,y+h*0.10,0.006,h*0.80,C.deep);
+    a.rn(x,y+h*0.10,0.006,h*0.80,C.deep);
+    a.rn(x+w*0.15,y+h*0.27,w*0.70,h*0.44,'rgba(160,205,203,0.75)');
+    a.rn(x+w*0.17,y+h*0.29,w*0.66,h*0.12,'rgba(255,255,255,0.9)');
+    a.rn(x+w*0.17,y+h*0.58,w*0.66,h*0.10,'rgba(203,232,229,0.95)');
+    a.ell(a.n(x+w*0.31),a.n(y+h*0.35),a.n(w*0.11),a.n(w*0.09),rgba(C.violet,0.55));
+    a.ell(a.n(x+w*0.31),a.n(y+h*0.35),a.n(w*0.05),a.n(w*0.04),C.magenta);
+    a.p(a.n(x+w*0.33),a.n(y+h*0.33),'#ffffff');
+    // человек
+    const hb=LAY.hero;
+    heroShape(a,hb,{leg:'rgba(22,34,42,0.55)',body:'rgba(207,234,231,0.85)',arm:'rgba(207,234,231,0.7)',head:'rgba(255,255,255,0.95)',headRound:true,rim:'rgba(255,255,255,0.9)'});
+    a.ell(a.n(hb[0]+hb[2]*0.5),a.n(hb[1]+hb[3]*0.40),a.n(hb[2]*0.22),a.n(hb[3]*0.18),C.magenta);
+    a.ell(a.n(hb[0]+hb[2]*0.5),a.n(hb[1]+hb[3]*0.42),a.n(hb[2]*0.13),a.n(hb[3]*0.10),C.violet);
+    // пыль и пузырьки
+    for(let i=0;i<90;i++){
+      const x=a.rand()*S, y=a.rand()*S;
+      a.p(x|0,y|0, a.rand()<0.35 ? rgba(C.violet,0.55) : rgb2hex(12+(a.rand()*70|0), 34, 40));
+    }
+    for(let i=0;i<26;i++){
+      const x=a.rand()*S, y=a.rand()*S, r=2+a.rand()*9;
+      a.ring(x|0,y|0,r,1,'rgba(74,128,132,0.28)');
+    }
+    for(let i=0;i<7;i++){
+      const cx=a.rand(),cy=a.rand(),rr=2+a.rand()*4;
+      a.ring(a.n(cx),a.n(cy),rr,1,'rgba(255,255,255,0.55)');
+    }
+    // лёгкая виньетка покровного стекла
+    vignette(a,'#6fa9ab',0.20);
+  }
+},
+{
+  id:'heat', name:'Солнечный удар', one:'Полдень, в котором плавится асфальт: всё выбелено, тени фиолетовые и резкие.',
+  chips:['#fbf5e6','#efc9c2','#bfe0d2','#d8c7a8','#9b8cc4'],
+  meta:['пиксель 2×2','5 цветов · высокий ключ','жёсткие тени + дрожание воздуха'],
+  S:100, block:1, seed:57,
+  draw(a){
+    const C={sand:'#f2e9d6',cream:'#fdf8ea',road:'#e6dcc6',pink:'#efc9c2',mint:'#bfe0d2',dust:'#d8c7a8',violet:'#a294c9',violetD:'#8b7cb8',ink:'#5b4b66'};
+    const S=a.S;
+    baseFill(a,C.sand);
+    speckle(a,S*S*0.18,[C.dust,'#ece1cc']);
+    a.rn(0.315,0,0.37,1,C.road);
+    speckle(a,S*S*0.04,['#dcd0b8'],[0.315,0,0.37,1]);
+    for(let y=0.04;y<0.98;y+=0.15){ a.rn(0.482,y,0.026,0.068,C.cream); }
+    for(let i=0;i<8;i++) a.rn(0.322+i*0.0442,0.79,0.028,0.092,'rgba(255,255,255,0.85)');
+    a.rn(0.253,0,0.062,1,'#f7f1e2');
+    a.rn(0.685,0,0.062,1,'#f7f1e2');
+    a.rn(0.309,0,0.006,1,'#d9cdb6');
+    a.rn(0.685,0,0.006,1,'#d9cdb6');
+    heatRoof(a,LAY.bl1,C.pink,C,C.violet);
+    heatRoof(a,LAY.bl2,C.mint,C,C.violet);
+    heatRoof(a,LAY.br1,'#f3dfae',C,C.violet);
+    heatRoof(a,LAY.br2,C.pink,C,C.violet);
+    // жёсткие тени зданий на асфальт
+    a.poly([[0.249,0.30],[0.330,0.375],[0.330,0.78],[0.249,0.86]],'rgba(126,108,176,0.50)');
+    a.poly([[0.251,0.86],[0.330,0.79],[0.330,1.0],[0.251,1.0]],'rgba(126,108,176,0.42)');
+    a.poly([[0.753,0.44],[0.672,0.505],[0.672,0.995],[0.753,0.995]],'rgba(126,108,176,0.42)');
+    a.poly([[0.751,0.60],[0.672,0.665],[0.672,0.89],[0.751,0.855]],'rgba(126,108,176,0.34)');
+    a.poly([[0.251,0.42],[0.315,0.46],[0.315,0.52],[0.251,0.50]],'rgba(126,108,176,0.28)');
+    // машина
+    const b=LAY.car,x=b[0],y=b[1],w=b[2],h=b[3];
+    a.rn(x+0.020,y+0.026,w*1.02,h*0.96,'rgba(126,108,176,0.55)');
+    carShape(a,b,{body:'#fbf6ea',roof:'#f6efdf',glass:'#c9d9d2',headlight:'#ffffff',tail:'#e2b6ae',outline:'#d6c9b4',hi:'#ffffff',tyre:'#6d6070',hoodline:'#e6dcc8'});
+    a.rn(x+w*0.17,y+h*0.295,w*0.30,h*0.09,'rgba(255,255,255,0.95)');
+    a.rn(x+w*0.17,y+h*0.62,w*0.66,h*0.07,'rgba(150,132,188,0.35)');
+    // человек
+    a.poly([[LAY.hero[0]-0.006,LAY.hero[1]+LAY.hero[3]*0.98],[LAY.hero[0]+LAY.hero[2]+0.006,LAY.hero[1]+LAY.hero[3]*1.10],[LAY.hero[0]+LAY.hero[2]+0.030,LAY.hero[1]+LAY.hero[3]*1.55],[LAY.hero[0]-0.004,LAY.hero[1]+LAY.hero[3]*1.42]],'rgba(126,108,176,0.50)');
+    heroShape(a,LAY.hero,{leg:'#6d6070',body:'#fdf8ea',arm:'#fdf8ea',head:'#e9c3b6',hair:'#5b4b66',headRound:true,detail:'#bfe0d2',outline:'#b6a98f'});
+    streetLamp(a,0.700,0.20,{arm:'#c9bca6',head:'#fdf8ea',pole:'#bdb09a'});
+    // дрожание воздуха
+    for(let i=0;i<26;i++){
+      const y=0.62+a.rand()*0.36, x=0.30+a.rand()*0.40;
+      a.hline(a.n(x),a.n(y),a.n(0.02+a.rand()*0.05),'rgba(255,255,255,0.35)');
+    }
+    for(let i=0;i<10;i++) a.hline(a.n(0.26+a.rand()*0.48),a.n(0.55+a.rand()*0.42),a.n(0.01+a.rand()*0.03),'rgba(155,140,196,0.18)');
+  }
+},
+{
+  id:'chalk', name:'Мелом по асфальту', one:'Город, нарисованный детской рукой: крошащаяся линия, пыль и мокрый асфальт.',
+  chips:['#26262b','#f2efe4','#86d6d2','#e69ab7','#f2d873','#93a7e8'],
+  meta:['пиксель 2×2','5 мелков по асфальту','зерно, дрожащая линия, без контуров'],
+  S:100, block:1, seed:67,
+  draw(a){
+    const C={asph:'#26262b',wet:'#1b1b20',white:'#f2efe4',cyan:'#86d6d2',pink:'#e69ab7',yellow:'#f2d873',blue:'#93a7e8',dust:'#4a4a52'};
+    const S=a.S;
+    baseFill(a,'#2e2e34');
+    speckle(a,S*S*0.55,['#35353c','#252529','#3c3c44','#2a2a30']);
+    // мокрые пятна
+    for(let i=0;i<6;i++){
+      const x=a.rand()*S,y=a.rand()*S,r=8+a.rand()*18;
+      a.ell(x,y,r,r*0.6,'rgba(15,15,18,0.35)');
+    }
+    // разметка мелом
+    for(let y=0.03;y<0.98;y+=0.15){
+      chalkLine(a,0.487,y,0.512,y+0.06,C.white,1.2);
+      chalkLine(a,0.489,y+0.004,0.513,y+0.062,'rgba(242,239,228,0.75)',1.0);
+    }
+    for(let i=0;i<8;i++){
+      chalkRect(a,0.324+i*0.0442,0.788,0.024,0.09,C.white);
+    }
+    // тротуар: штриховка
+    a.rn(0.253,0,0.062,1,'#3a3a41');
+    a.rn(0.685,0,0.062,1,'#3a3a41');
+    for(let y=0;y<1;y+=0.045){
+      chalkLine(a,0.256,y,0.310,y+0.008,'rgba(242,239,228,0.45)',1);
+      chalkLine(a,0.688,y+0.01,0.744,y+0.018,'rgba(242,239,228,0.45)',1);
+    }
+    chalkLine(a,0.253,0,0.313,0,C.cyan,1.2);
+    chalkLine(a,0.253,0.5,0.313,0.5,C.cyan,1.2);
+    chalkLine(a,0.685,0,0.745,0,C.cyan,1.2);
+    chalkLine(a,0.685,0.52,0.745,0.52,C.cyan,1.2);
+    // крыши: контур + штрих
+    const roofs=[LAY.bl1,LAY.bl2,LAY.br1,LAY.br2];
+    const cols=[C.yellow,C.blue,C.pink,C.cyan];
+    roofs.forEach((b,i)=>{
+      const x=b[0],y=b[1],w=b[2],h=b[3],c=cols[i];
+      chalkRect(a,x,y,w,h,c);
+      for(let k=0;k<9;k++){
+        const yy=y+h*(0.12+k*0.095);
+        a.line(a.n(x+w*0.08+a.rand()*0.06),a.n(yy),a.n(x+w*0.92+a.rand()*0.06),a.n(yy+0.03),1,rgba(c,0.38));
+      }
+      chalkRect(a,x+w*0.6,y+h*0.55,w*0.25,h*0.16,'rgba(242,239,228,0.75)');
+      a.disc(a.n(x+w*0.7),a.n(y+h*0.3),a.n(w*0.07),rgba(c,0.18));
+      chalkLine(a,x+w*0.7,a.n(0)-0.0,x+w*0.7,y+h*0.2,c,1.5);
+    });
+    // машина: контур мелом + заливка штрихом
+    const b=LAY.car,x=b[0],y=b[1],w=b[2],h=b[3];
+    chalkRect(a,x,y+h*0.10,w,h*0.80,C.pink);
+    for(let i=0;i<9;i++){
+      const yy=y+h*(0.13+i*0.085);
+      a.line(a.n(x+0.01+a.rand()*0.02),a.n(yy),a.n(x+w-0.01+a.rand()*0.03),a.n(yy),1,rgba(C.pink,0.55));
+    }
+    chalkRect(a,x+w*0.16,y+h*0.28,w*0.68,h*0.42,'rgba(242,239,228,0.8)');
+    chalkLine(a,x+w*0.16,y+h*0.58,x+w*0.84,y+h*0.58,'rgba(242,239,228,0.5)',1);
+    a.disc(a.n(x+w*0.12),a.n(y+h*0.06),a.n(w*0.10),'rgba(242,232,160,0.55)');
+    a.disc(a.n(x+w*0.88),a.n(y+h*0.06),a.n(w*0.10),'rgba(242,232,160,0.55)');
+    // человек
+    const hb=LAY.hero;
+    chalkLine(a,hb[0],hb[1]+hb[3]*0.95,hb[0]+hb[2]*0.15,hb[1]+hb[3]*0.55,C.blue,1);
+    heroShape(a,hb,{outline:'rgba(12,12,14,0.55)',leg:'rgba(147,167,232,0.85)',body:'rgba(230,154,183,0.9)',arm:'rgba(230,154,183,0.75)',head:'rgba(242,239,228,0.95)',headRound:true,hair:'rgba(147,167,232,0.95)'});
+    // меловая пыль
+    for(let i=0;i<160;i++){
+      const c=e=>e[(a.rand()*e.length)|0];
+      a.p(a.rand()*S,a.rand()*S,rgba(c([C.white,C.cyan,C.pink,C.yellow]),0.20+a.rand()*0.35));
+    }
+    // блик мокрого асфальта
+    a.ctx.save(); a.ctx.globalAlpha=0.10;
+    a.ctx.fillStyle='#ffffff'; a.ctx.fillRect(0,a.n(0.88),S,a.n(0.12));
+    a.ctx.restore();
+  }
+},
+{
+  id:'lamp', name:'Лампа и сажа', one:'Мир почти чёрный: видно только то, что выхватил свет фонаря или фар.',
+  chips:['#05050a','#1b1418','#4a2f1e','#b9762c','#ffd88a'],
+  meta:['пиксель 4×4','5 цветов · один тёплый источник','свет с дизерингом, без заливок'],
+  S:100, block:2, seed:71,
+  draw(a){
+    const C={black:'#05050a',soot:'#151016',deep:'#241a1c',brown:'#3f2a1d',amber:'#b9762c',light:'#ffd88a',ember:'#e0552f'};
+    const S=a.S;
+    baseFill(a,C.black);
+    // еле различимая геометрия
+    a.rn(0.315,0,0.37,1,'#121016');
+    a.rn(0.253,0,0.062,1,'#1b1619');
+    a.rn(0.685,0,0.062,1,'#1b1619');
+    for(let y=0.04;y<0.98;y+=0.15) a.rn(0.485,y,0.028,0.07,'#2e2528');
+    for(let i=0;i<8;i++) a.rn(0.322+i*0.0442,0.79,0.026,0.09,'#d8b678');
+    // крыши-массы
+    const roofs=[LAY.bl1,LAY.bl2,LAY.br1,LAY.br2];
+    roofs.forEach(b=>{
+      a.rn(b[0],b[1],b[2],b[3],'#161115');
+      a.rn(b[0],b[1],b[2],0.008,'#3a2b28');
+      a.rn(b[0],b[1],0.008,b[3],'#2a1f22');
+    });
+    // контуры, поймавшие свет
+    const lightRim=(b,side)=>{
+      if(side==='r') a.rn(b[0]+b[2]*0.6,b[1]+0.03,0.006,b[3]*0.9,rgba(C.amber,0.35));
+      if(side==='l') a.rn(b[0]+b[2]*0.05,b[1]+0.04,0.006,b[3]*0.85,rgba(C.amber,0.22));
+    };
+    lightRim(LAY.bl1,'r'); lightRim(LAY.bl2,'r'); lightRim(LAY.br1,'l'); lightRim(LAY.br2,'l');
+    // машина во тьме
+    const b=LAY.car,x=b[0],y=b[1],w=b[2],h=b[3];
+    a.rn(x,y+h*0.10,w,h*0.80,'#141014');
+    a.rn(x+w*0.15,y+h*0.27,w*0.70,h*0.44,'#0e0b0f');
+    a.rn(x+w*0.10,y+h*0.925,w*0.16,h*0.03,C.ember);
+    a.rn(x+w*0.74,y+h*0.925,w*0.16,h*0.03,C.ember);
+    a.rn(x+w*0.06,y+h*0.025,w*0.16,h*0.026,'#ffe9c0');
+    a.rn(x+w*0.78,y+h*0.025,w*0.16,h*0.026,'#ffe9c0');
+    a.rn(x,y+h*0.10,w,0.006,rgba(C.amber,0.75));
+    a.rn(x,y+h*0.88,w,0.006,rgba(C.amber,0.45));
+    a.rn(x,y+h*0.10,0.008,h*0.80,rgba(C.light,0.85));
+    a.rn(x+w-0.008,y+h*0.10,0.008,h*0.80,rgba(C.brown,0.9));
+    a.rn(x+w*0.15,y+h*0.27,w*0.70,h*0.44,'#241c1c');
+    a.rn(x+w*0.17,y+h*0.29,w*0.66,h*0.11,'#463228');
+    a.rn(x+w*0.17,y+h*0.58,w*0.66,h*0.10,'#3a2a24');
+    a.rn(x+w*0.10,y+h*0.11,w*0.12,h*0.10,'#241c1c');
+    a.rn(x+w*0.78,y+h*0.79,w*0.12,h*0.10,'#241c1c');
+    // человек с лампой
+    heroShape(a,LAY.hero,{leg:'#0c0a0d',body:'#171217',head:'#1c161a',headRound:true,rim:C.amber});
+    a.disc(a.n(LAY.hero[0]+LAY.hero[2]*0.94),a.n(LAY.hero[1]+LAY.hero[3]*0.52),1.2,C.light);
+    // фонари
+    streetLamp(a,0.702,0.16,{arm:'#241a18',head:'#3a2a1e',pole:'#1d1618'});
+    streetLamp(a,0.702,0.66,{arm:'#241a18',head:'#3a2a1e',pole:'#1d1618'});
+    // свет
+    a.ctx.save();
+    a.ctx.globalCompositeOperation='lighter';
+    glowSpot(a,0.600,0.150,0.235,'#ffbe5a',0.62);
+    glowSpot(a,0.598,0.660,0.185,'#ffaf46',0.48);
+    glowSpot(a,0.300,0.320,0.105,'#ffd282',0.38);
+    glowSpot(a,0.600,0.150,0.075,'#ffe6b0',0.55);
+    glowSpot(a,0.300,0.320,0.032,'#ffe9c0',0.50);
+    // фары
+    a.poly([[0.545,0.175],[0.655,0.175],[0.72,0.02],[0.47,0.02]],'rgba(255,215,140,0.10)');
+    a.ctx.restore();
+    // дизеринг по краям света
+    for(let i=0;i<220;i++){
+      const ang=a.rand()*Math.PI*2, rr=0.20+a.rand()*0.10;
+      const x=0.60+Math.cos(ang)*rr, y=0.15+Math.sin(ang)*rr;
+      if(x<0||x>1||y<0||y>1) continue;
+      const b=a.bayer(a.n(x),a.n(y));
+      if(b > 0.55) continue;
+      a.p(a.n(x),a.n(y),rgba(C.amber,0.18+a.rand()*0.22));
+    }
+    for(let i=0;i<90;i++){
+      const ang=a.rand()*Math.PI*2, rr=0.10+a.rand()*0.07;
+      a.p(a.n(0.30+Math.cos(ang)*rr),a.n(0.32+Math.sin(ang)*rr),rgba(C.light,0.14+a.rand()*0.2));
+    }
+    // окна-искры
+    for(let i=0;i<9;i++){
+      const r=roofs[(a.rand()*4)|0];
+      a.p(a.n(r[0]+r[2]*a.rand()),a.n(r[1]+r[3]*a.rand()),rgba(C.light,0.35));
+    }
+    vignette(a,'#020203',0.45);
+  }
+},
+{
+  id:'garden', name:'Железобетонный сад', one:'Бетон, который съела зелень: мох в трещинах, пятна солнца сквозь листву.',
+  chips:['#454b47','#666d68','#8d938c','#4e7a3d','#8dbb52','#a25c34','#6d8580'],
+  meta:['пиксель 2×2','7 цветов · бетон + хлорофилл','пятнистый свет, мягкие тени'],
+  S:100, block:1, seed:83,
+  draw(a){
+    const C={deep:'#3c4340',dark:'#5d6360',mid:'#8d938c',light:'#b4b9ae',moss:'#4e7a3d',acid:'#8dbb52',fern:'#b7d47a',rust:'#a25c34',puddle:'#6d8580'};
+    const S=a.S;
+    baseFill(a,C.mid);
+    speckle(a,S*S*0.35,[C.dark,C.light,'#7d8479','#979d92']);
+    // дорога
+    a.rn(0.315,0,0.37,1,'#6f7570');
+    speckle(a,S*S*0.10,[C.dark,'#7b817b'],[0.315,0,0.37,1]);
+    for(let y=0.04;y<0.98;y+=0.15){
+      a.rn(0.484,y,0.028,0.068,'#c3c7b8');
+      a.rn(0.500,y,0.010,0.068,C.moss);
+    }
+    for(let i=0;i<8;i++) a.rn(0.322+i*0.0442,0.79,0.028,0.09,'#c3c7b8');
+    // трещины
+    for(let i=0;i<7;i++){
+      const x=0.17+a.rand()*0.7, y=0.2+a.rand()*0.7;
+      a.line(a.n(x),a.n(y),a.n(x+0.05+a.rand()*0.05),a.n(y+0.03),1,'#4c524e');
+      a.p(a.n(x)+1,a.n(y),C.acid);
+    }
+    // тротуары
+    a.rn(0.253,0,0.062,1,'#9aa095');
+    a.rn(0.685,0,0.062,1,'#9aa095');
+    for(let y=0;y<1;y+=0.085){
+      a.rn(0.253,y,0.062,0.006,'#6c726c');
+      a.rn(0.685,y,0.062,0.006,'#6c726c');
+      if(a.rand()<0.55){ a.rn(0.253+0.062*a.rand(),y+0.004,0.020,0.008,C.moss); }
+    }
+    a.rn(0.309,0,0.006,1,'#b9bea9');
+    a.rn(0.685,0,0.006,1,'#b9bea9');
+    // крыши
+    const roofs=[LAY.bl1,LAY.bl2,LAY.br1,LAY.br2];
+    const tones=[C.dark,'#8f958b','#7e857c','#999f94'];
+    roofs.forEach((b,i)=>{
+      const x=b[0],y=b[1],w=b[2],h=b[3];
+      a.rn(x,y,w,h,tones[i]);
+      a.rn(x,y,w,0.006,C.light);
+      a.rn(x+w-0.008,y,0.008,h,C.deep);
+      a.rn(x+w*0.12,y+h*0.14,w*0.24,h*0.13,'#a8ada2');
+      a.rn(x+w*0.12,y+h*0.25,w*0.24,h*0.02,C.deep);
+      a.rn(x+w*0.58,y+h*0.52,w*0.24,h*0.16,'#a8ada2');
+      // ржавые потёки
+      for(let k=0;k<3;k++) a.rn(x+w*(0.2+k*0.2),y+h*(0.1+a.rand()*0.5),0.008,h*0.10+a.rand()*0.08,rgba(C.rust,0.35));
+      // мох
+      mossPatch(a,x+w*0.2+a.rand()*0.5,y+h*0.68+a.rand()*0.2,0.09,C);
+      a.disc(a.n(x+w*0.7),a.n(y+h*0.3),a.n(w*0.07),C.dark);
+      a.disc(a.n(x+w*0.7),a.n(y+h*0.3),a.n(w*0.05),'#b0b5aa');
+      // трава на парапете
+      for(let k=0;k<4;k++) a.rn(x+w*(0.1+0.2*k),y+h*0.02,0.008,h*0.04,C.acid);
+    });
+    // машина
+    const b=LAY.car,x=b[0],y=b[1],w=b[2],h=b[3];
+    a.rn(x+0.014,y+0.018,w,h,'rgba(60,67,64,0.5)');
+    carShape(a,b,{body:'#8b8f86',roof:'#7a7f76',glass:'#63736f',headlight:'#c8ccbe',tail:'#8f5544',outline:'#4a504c',hi:'#b9beae',tyre:'#3a403d',hoodline:'#6a706a'});
+    a.rn(x+w*0.18,y+h*0.30,w*0.26,h*0.10,rgba(C.rust,0.55));
+    mossPatch(a,x+w*0.62,y+h*0.40,0.05,C);
+    a.line(a.n(x+w*0.2),a.n(y+h*0.6),a.n(x+w*0.4),a.n(y+h*0.7),1,C.acid);
+    a.line(a.n(x+w*0.4),a.n(y+h*0.7),a.n(x+w*0.55),a.n(y+h*0.66),1,C.moss);
+    // персонаж
+    heroShape(a,LAY.hero,{shadow:'rgba(60,67,64,0.45)',outline:'#3c4340',leg:'#3f4a42',body:'#6f7f63',arm:'#6f7f63',head:'#c9b393',hair:'#3b332c',headRound:true,detail:C.acid});
+    // лужи
+    a.ell(a.n(0.40),a.n(0.70),a.n(0.035),a.n(0.012),rgba(C.puddle,0.75));
+    a.ell(a.n(0.62),a.n(0.60),a.n(0.028),a.n(0.010),rgba(C.puddle,0.65));
+    // пятна света и листвы
+    a.ctx.save();
+    a.ctx.globalAlpha=1;
+    for(let i=0;i<26;i++){
+      const x=0.27+a.rand()*0.46, y=0.05+a.rand()*0.9;
+      a.ell(a.n(x),a.n(y),a.n(0.012+a.rand()*0.03),a.n(0.008+a.rand()*0.02),'rgba(236,240,210,0.16)');
+    }
+    for(let i=0;i<18;i++){
+      const x=0.27+a.rand()*0.46, y=0.2+a.rand()*0.75;
+      a.ell(a.n(x),a.n(y),a.n(0.010+a.rand()*0.022),a.n(0.007+a.rand()*0.014),'rgba(46,60,40,0.16)');
+    }
+    a.ctx.restore();
+    vignette(a,'#2f3833',0.25);
+  }
+},
+{
+  id:'stage', name:'Прожектор', one:'Криминальная сцена на чёрной сцене: только силуэты и тонкий контровой свет.',
+  chips:['#08080b','#101a2e','#a83f6f','#e0a24b','#f2dfb2'],
+  meta:['пиксель 2×2','5 цветов · силуэт + рим-лайт','один прожектор, глубокий чёрный'],
+  S:100, block:1, seed:97,
+  draw(a){
+    const C={black:'#08080b',navy:'#101a2e',magenta:'#a83f6f',warm:'#e0a24b',cream:'#f2dfb2'};
+    const S=a.S;
+    baseFill(a,C.black);
+    // сценический пол: пятно света
+    a.ctx.save();
+    a.ctx.globalCompositeOperation='lighter';
+    glowSpot(a,0.46,0.46,0.85,'#a83f6f',0.85);
+    glowSpot(a,0.44,0.40,0.55,'#e0a24b',0.75);
+    glowSpot(a,0.44,0.40,0.26,'#f2dfb2',0.55);
+    a.ctx.restore();
+    // дорога/тротуар — тональные полосы
+    a.rn(0.315,0,0.37,1,'rgba(30,44,74,0.75)');
+    a.rn(0.253,0,0.062,1,'rgba(26,38,64,0.55)');
+    a.rn(0.685,0,0.062,1,'rgba(26,38,64,0.55)');
+    for(let y=0.05;y<0.98;y+=0.15) a.rn(0.486,y,0.024,0.066,'rgba(242,223,178,0.30)');
+    for(let i=0;i<8;i++) a.rn(0.322+i*0.0442,0.79,0.026,0.09,'rgba(242,223,178,0.26)');
+    // силуэты домов
+    const silhouettes=[
+      {b:LAY.bl1, rr:'#040406', rim:'right', shape:'flat'},
+      {b:LAY.bl2, rr:'#040406', rim:'right', shape:'tank'},
+      {b:LAY.br1, rr:'#050508', rim:'left', shape:'antenna'},
+      {b:LAY.br2, rr:'#040406', rim:'left', shape:'flat'}
+    ];
+    silhouettes.forEach(s=>{
+      const b=s.b,x=b[0],y=b[1],w=b[2],h=b[3];
+      a.rn(x,y,w,h,C.black);
+      // неровный край
+      for(let k=0;k<4;k++){
+        const ww=w*(0.15+a.rand()*0.2);
+        a.rn(x+w*a.rand()*0.6,y-h*(0.01+a.rand()*0.02),ww,h*(0.02+a.rand()*0.02),C.black);
+      }
+      if(s.shape==='tank'){
+        a.disc(a.n(x+w*0.6),a.n(y+h*0.35),a.n(w*0.12),C.black);
+        a.ring(a.n(x+w*0.6),a.n(y+h*0.35),a.n(w*0.12),1,rgba(C.magenta,0.55));
+      }
+      if(s.shape==='antenna'){
+        a.rn(x+w*0.7,y+h*0.1,0.008,h*0.22,C.black);
+        a.rn(x+w*0.68,y+h*0.1,0.05,0.006,C.black);
+        a.ring(a.n(x+w*0.7),a.n(y+h*0.1),2,1,rgba(C.warm,0.6));
+      }
+      // контровой свет
+      if(s.rim==='right'){
+        a.rn(x+w-0.008,y+0.02,0.008,h-0.03,rgba(C.magenta,0.95));
+        a.rn(x+w-0.008,y+h-0.04,0.008,h*0.03,rgba(C.magenta,0.35));
+      }else{
+        a.rn(x,y+0.02,0.008,h-0.03,rgba(C.warm,0.85));
+      }
+    });
+    // машина-силуэт
+    const b=LAY.car,x=b[0],y=b[1],w=b[2],h=b[3];
+    a.rn(x,y+h*0.10,w,h*0.80,C.black);
+    a.rn(x+w*0.06,y+h*0.02,w*0.88,h*0.10,C.black);
+    a.rn(x+w*0.06,y+h*0.88,w*0.88,h*0.10,C.black);
+    a.rn(x+w*0.15,y+h*0.27,w*0.70,h*0.44,'#020203');
+    a.rn(x+w-0.010,y+h*0.12,0.010,h*0.75,rgba(C.cream,0.95));
+    a.rn(x+w-0.008,y+h*0.10,0.008,h*0.02,rgba(C.warm,0.9));
+    a.rn(x+w*0.72,y+h*0.945,w*0.16,h*0.026,'#7a1f2c');
+    a.rn(x+w*0.12,y+h*0.945,w*0.16,h*0.026,'#7a1f2c');
+    // персонаж-силуэт
+    const hb=LAY.hero;
+    heroShape(a,hb,{leg:C.black,body:C.black,arm:C.black,head:C.black,headRound:true,rim:rgba(C.warm,0.85)});
+    a.ell(a.n(hb[0]+hb[2]*0.75),a.n(hb[1]+hb[3]*1.05),a.n(hb[2]*0.55),a.n(hb[3]*0.25),'rgba(0,0,0,0.55)');
+    // прожекторные лучи
+    a.ctx.save();
+    a.ctx.globalCompositeOperation='lighter';
+    a.poly([[0.0,0.0],[0.30,0.0],[0.62,1.0],[0.10,1.0]],'rgba(224,162,75,0.05)');
+    a.poly([[1.0,0.0],[0.74,0.0],[0.40,1.0],[0.92,1.0]],'rgba(168,63,111,0.05)');
+    a.ctx.restore();
+    // пылинки
+    for(let i=0;i<90;i++){
+      const x=0.20+a.rand()*0.62, y=a.rand();
+      a.p(a.n(x),a.n(y),rgba(C.cream,0.10+a.rand()*0.4));
+    }
+    vignette(a,'#000000',0.55);
+  }
+},
+{
+  id:'film', name:'Плёнка 74', one:'Архивная запись преступления: тёплая выцветшая плёнка, зерно и царапины.',
+  chips:['#2a1f18','#5c3a26','#a9632f','#cfa468','#ecdcb4','#48655f'],
+  meta:['пиксель 2×2','6 цветов · выцветшая плёнка','галация, зерно, царапины, виньетка'],
+  S:100, block:1, seed:103,
+  draw(a){
+    const C={ink:'#2a1f18',brown:'#5c3a26',orange:'#a9632f',tan:'#cfa468',cream:'#ecdcb4',teal:'#48655f',red:'#8d3d2b'};
+    const S=a.S;
+    baseFill(a,'#7a5b3c');
+    speckle(a,S*S*0.30,['#735436','#846443','#6c4f33']);
+    a.rn(0.315,0,0.37,1,'#6d6252');
+    speckle(a,S*S*0.08,['#5f5546','#7b6f5c'],[0.315,0,0.37,1]);
+    for(let y=0.04;y<0.98;y+=0.15) a.rn(0.483,y,0.028,0.068,'#d8c79b');
+    for(let i=0;i<8;i++) a.rn(0.322+i*0.0442,0.79,0.028,0.09,'#e2d3ab');
+    a.rn(0.253,0,0.062,1,'#a89070');
+    a.rn(0.685,0,0.062,1,'#a89070');
+    for(let y=0;y<1;y+=0.085){
+      a.rn(0.253,y,0.062,0.005,'#8a7458');
+      a.rn(0.685,y,0.062,0.005,'#8a7458');
+    }
+    a.rn(0.309,0,0.006,1,'#cbb58e');
+    a.rn(0.685,0,0.006,1,'#cbb58e');
+    // крыши
+    const roofs=[LAY.bl1,LAY.bl2,LAY.br1,LAY.br2];
+    const tones=[C.brown,'#8a5a32',C.orange,'#6f4a2d'];
+    roofs.forEach((b,i)=>{
+      const x=b[0],y=b[1],w=b[2],h=b[3];
+      a.rn(x,y,w,h,tones[i]);
+      a.rn(x,y,w,0.008,light(tones[i],0.18));
+      a.rn(x+w-0.008,y,0.008,h,dark(tones[i],0.22));
+      for(let k=0;k<3;k++) a.rn(x+w*(0.1+k*0.27),y+h*0.12,w*0.18,h*0.10,dark(tones[i],0.16));
+      a.rn(x+w*0.60,y+h*0.55,w*0.24,h*0.16,light(tones[i],0.10));
+      a.rn(x+w*0.60,y+h*0.55,w*0.24,0.006,light(tones[i],0.30));
+      a.disc(a.n(x+w*0.25),a.n(y+h*0.72),a.n(w*0.08),dark(tones[i],0.2));
+      a.disc(a.n(x+w*0.25),a.n(y+h*0.72),a.n(w*0.05),C.teal);
+      // потёки и пятна
+      for(let k=0;k<2;k++) a.rn(x+w*a.rand(),y+h*0.2,0.008,h*0.25,'rgba(40,28,20,0.25)');
+    });
+    // машина
+    const b=LAY.car,x=b[0],y=b[1],w=b[2],h=b[3];
+    a.rn(x+0.014,y+0.018,w,h,'rgba(42,31,24,0.5)');
+    carShape(a,b,{body:'#9c4a34',roof:'#8c4130',glass:'#7d8f7e',headlight:'#ecdcb4',tail:'#5f1f18',outline:'#432a20',hi:'#c9785a',tyre:'#2a211b',hoodline:'#7c3a2a'});
+    a.rn(x+w*0.30,y+h*0.42,w*0.40,h*0.06,'#cfa468');
+    a.rn(x+w*0.72,y+h*0.05,w*0.16,h*0.026,'#f7ecc8');
+    // человек
+    heroShape(a,LAY.hero,{shadow:'rgba(42,31,24,0.45)',outline:'#2a1f18',leg:'#3b2d22',body:'#d9c59b',arm:'#d9c59b',head:'#c09a72',hair:'#2a1f18',headRound:true,detail:C.teal});
+    // галация вокруг машины и фонаря
+    a.ctx.save();
+    a.ctx.globalCompositeOperation='lighter';
+    glowSpot(a,0.60,0.28,0.16,'#ffc46e',0.20);
+    glowSpot(a,0.30,0.33,0.09,'#ffdca0',0.12);
+    a.ctx.restore();
+    streetLamp(a,0.700,0.22,{arm:'#4a382a',head:'#c9a86c',pole:'#3a2c21'});
+    // зерно
+    for(let i=0;i<420;i++){
+      const c=a.rand()<0.5?'rgba(236,220,180,0.16)':'rgba(30,22,17,0.18)';
+      a.p(a.rand()*S,a.rand()*S,c);
+    }
+    // пылинки и царапины
+    for(let i=0;i<14;i++){
+      const x=a.rand()*S, y=a.rand()*S;
+      a.p(x|0,y|0,'rgba(20,14,10,0.55)');
+      if(a.rand()<0.4) a.p((x+1)|0,y|0,'rgba(245,235,205,0.35)');
+    }
+    for(let i=0;i<3;i++){
+      const x=(0.1+a.rand()*0.8)*S;
+      a.r(x,0,1,S,'rgba(245,235,205,0.10)');
+      a.r(x+1,0,1,S,'rgba(30,20,14,0.12)');
+    }
+    vignette(a,'#1c130d',0.55);
+    // лёгкий кадровый край
+    a.rn(0,0,1,0.006,'rgba(0,0,0,0.5)');
+    a.rn(0,0.994,1,0.006,'rgba(0,0,0,0.5)');
+  }
+}
+];
+//__ART_END__
+
+/* =========================================================================
+   ТЕХНИЧЕСКИЙ РАЗБОР ПО КАЖДОМУ СТИЛЮ
+   ========================================================================= */
+const DETAILS = {
+  amber: {
+    pixel:'логический тайл 16×16, спрайт 8×12, блоки 3×3 px; внутреннее разрешение 320×180, апскейл ×4',
+    pal:'8 цветов, одна смоляная шкала: #150602 · #3a1204 · #6d2a0a · #94400f · #c4691c · #eaa63c · #ffd27a · #fff3cf',
+    tech:'плотная заливка без контуров, дизеринг только в пыли и тенях; блики — отдельные пиксели-капли',
+    light:'свет как бы проходит сквозь асфальт: тёплая аддитивная подсветка изнутри + тяжёлая виньетка',
+    car:'янтарный седан с медным капотом, стёкла светятся, фары — две капли кремового; тень в 3 px',
+    hero:'кремовый плащ читается светлым пятном, рыжие волосы, круглый силуэт головы, ходьба 4 кадра по 2 px',
+    street:'асфальт смолистый с крапинами, тротуар — соты, крыши с баками и кондиционерами, всё в одной шкале',
+    refs:'Hyper Light Drifter — тёплая лимитированная палитра и свечение; Sword & Sworcery — монохромная смола'
+  },
+  xray: {
+    pixel:'1 px линии на слое 16×16, спрайт 6×11, всё рисуется как контур; разрешение 480×270, апскейл ×3',
+    pal:'5 цветов в инверсии: #01050a · #04161e · #0b4453 · #36b3c6 · #8fe6f2 (плюс белый блик #eafcff)',
+    tech:'инвертированные значения, прозрачные заливки, скан-линии каждые 4 px, свечение через аддитивный слой',
+    light:'источник снизу, как негатоскоп: объекты светятся контуром, тени отсутствуют, плотность = толщина линии',
+    car:'рёбра кузова и колёса-кольца, двигатель — самое яркое пятно, салон виден насквозь',
+    hero:'скелет: череп белым, позвоночник пунктиром, рёбра 1 px; анимация — сдвиг костей на 1 px',
+    street:'дорога чёрная, светятся только стыки и разметка; крыши просвечены, видны трубы и вентиляция',
+    refs:'Scanner Sombre — «город на просвет»; Return of the Obra Dinn — дисциплина 1-битного контура'
+  },
+  paper: {
+    pixel:'тайл 16×16, спрайт 9×13, блоки 4×4; разрешение 320×180, апскейл ×4',
+    pal:'6 цветов бумаги и гуаши: #cbb48c · #f4ead2 · #c0483a · #3a6f96 · #e5b23f · #5c8a5a',
+    tech:'аппликация: плоские листы, неровный край в 1 px, обязательная тень-офсет +2/+2, контуров нет',
+    light:'один жёсткий источник сверху-слева; глубина только за счёт офсетной тени, градиентов нет вообще',
+    car:'красный бумажный седан, лобовое стекло — кремовый прямоугольник, тень отдельным листом',
+    hero:'марионетка из 4 листов, голова-круг, ходьба — покачивание корпуса на 1 px без интерполяции',
+    street:'дорога — тёмный лист картона, разметка кремовыми полосками, крыши цветными пластинами с окнами-дырками',
+    refs:'Paper Mario — слоистая бумага; Hidden Folks — вырезанные фигурки на плоскости'
+  },
+  specimen: {
+    pixel:'1 px, внутреннее разрешение 640×360, без тайловой сетки — органика; спрайт 14×20',
+    pal:'красители: гематоксилин #6b3f96, эозин #d0559b, малахит #6fa9ab, стекло #e8f7f4, тушь #16222a',
+    tech:'полупрозрачные слои, двойные контуры (стекло+тушь), пузырьки, пылинки и микрометрическая сетка',
+    light:'проходящий свет снизу: тени не рисуются, вместо них — рефракционные ободки и лёгкое свечение краёв',
+    car:'оболочка автомобиля с видимым «ядром» двигателя, стекло — светлее кузова, тень отсутствует',
+    hero:'фигура как клетка: светлый контур, розовое ядро, ходьба — пульсация ядра на 1 px',
+    street:'дорога — прозрачный канал с раствором, тротуар — предметное стекло с сеткой, крыши — чашки Петри',
+    refs:'Botanicula — органика и полупрозрачность; Mushroom 11 — биологическая пластика форм'
+  },
+  heat: {
+    pixel:'тайл 16×16, спрайт 8×12, блоки 2×2; разрешение 480×270, апскейл ×3',
+    pal:'5 высоких тонов + фиолетовая тень: #f2e9d6 · #efc9c2 · #bfe0d2 · #d8c7a8 · #a294c9',
+    tech:'почти без текстур: одна крапина на 64 px, все контуры светлее заливки, дрожание воздуха 1-px срезами',
+    light:'жёсткие диагональные тени 45°, высокий ключ, пересвет на крышах и капоте; тень всегда фиолетовая',
+    car:'выбеленный кремовый купе, хром вспыхивает белым, тень-плашка со сдвигом +6 px',
+    hero:'белая футболка, фиолетовая длинная тень, читается за счёт контраста с асфальтом',
+    street:'асфальт выгоревший до песка, разметка белая и облупленная, трава сухая, всё в пыли',
+    refs:'A Short Hike — пастель и воздух; Donut County — плоские светлые формы'
+  },
+  chalk: {
+    pixel:'тайл 16×16 с дрожанием ±1 px, спрайт 8×12, блоки 2×2; разрешение 480×270, апскейл ×3',
+    pal:'5 мелков по мокрому асфальту: #f2efe4 · #86d6d2 · #e69ab7 · #f2d873 · #93a7e8 на #26262b',
+    tech:'линия ведётся с джиттером и разрывами, заливка только штриховкой, облако меловой пыли поверх кадра',
+    light:'источник отсутствует: всё нарисовано, а не освещено; блик — горизонтальная полоса внизу',
+    car:'контур розовым мелом, штриховка в кузове, фары — жёлтые круги-смазки',
+    hero:'детский рисунок: круглая голова, палочные руки, кривые ноги; анимация — перерисовка позы каждый кадр',
+    street:'мокрый асфальт, меловая сетка тротуара, крыши — рамки с диагональной штриховкой, классики на дороге',
+    refs:'Kentucky Route Zero — экономный рисунок линией; Genesis Noir — графика «наброска»'
+  },
+  lamp: {
+    pixel:'тайл 16×16, спрайт 6×11, блоки 4×4; разрешение 320×180, апскейл ×4',
+    pal:'5 цветов, 90% кадра — чернота: #05050a · #151016 · #3f2a1d · #b9762c · #ffd88a',
+    tech:'силуэт первым: сначала форма, потом один источник; дизеринг-затухание по краю света, rim-light 1 px',
+    car:'видна только кромка капота и два красных габарита, пока не попадёт в конус фонаря',
+    hero:'чёрный силуэт с янтарным контровым контуром, в руке лампа — мобильный радиус света в геймплее',
+    street:'сажа, лужи света под фонарями, разметка проявляется только внутри конуса; всё остальное угадывается',
+    refs:'Darkwood — тьма как механика; Rain World — контровой свет на силуэтах'
+  },
+  garden: {
+    pixel:'тайл 16×16, спрайт 8×12, блоки 2×2; разрешение 480×270, апскейл ×3',
+    pal:'7 цветов бетона и хлорофилла: #454b47 · #666d68 · #8d938c · #4e7a3d · #8dbb52 · #a25c34 · #6d8580',
+    tech:'плоский бетон + отдельный слой мха пиксельной крошкой, трещины 1 px, без контуров',
+    light:'мягкий рассеянный свет сквозь листву: пятна света и тени одинаковой формы, наложенные на всё',
+    car:'серый хэтчбек с ржавыми потёками, мох в стыке капота, лиана в окне',
+    hero:'оливковая куртка, секатор в руке, читается пятном зелени среди бетона',
+    street:'плиты с трещинами, пучки травы, лужи, крыши-сады с ящиками и бочками',
+    refs:'Eastward — грязь и тепло; Cloud Gardens — зелень поверх руин'
+  },
+  stage: {
+    pixel:'тайл 16×16, спрайт 7×12, блоки 2×2; разрешение 480×270, апскейл ×3',
+    pal:'5 цветов сцены: #08080b · #101a2e · #a83f6f · #e0a24b · #f2dfb2',
+    tech:'только силуэты и контровой контур 1 px; мягкое пятно прожектора, пылинки, никакой текстуры поверх чёрного',
+    light:'один прожектор сверху, два цветных рим-лайта с противоположных сторон; всё вне пятна — чистый чёрный',
+    car:'чёрный силуэт, читаются только хромовая кромка, колёса и красные габариты',
+    hero:'плащ-силуэт с янтарным контуром, длинная тень-эллипс; ходьба — покадровая, без сглаживания',
+    street:'пол невидим: разметка и тротуар проявляются только внутри конуса света',
+    refs:'Hotline Miami — верхний вид и агрессивный цвет; Ape Out — чистая сила силуэта'
+  },
+  film: {
+    pixel:'тайл 16×16, спрайт 8×12, блоки 2×2; разрешение 480×270, апскейл ×3',
+    pal:'6 выцветших плёночных тонов: #2a1f18 · #5c3a26 · #a9632f · #cfa468 · #ecdcb4 · #48655f',
+    tech:'галация вокруг источников, зерно на каждом кадре, пылинки, вертикальные царапины, виньетка и лёгкий джиттер кадра',
+    light:'низкий контражур закатного солнца, тёплые пятна на крышах, тени коричневые, а не чёрные',
+    car:'пыльный купе 70-х ржаво-красного цвета, хром пересвечен, номерной знак стёрт',
+    hero:'бежевая куртка и тёмные волосы, читается на фоне асфальта; анимация 4 кадра с дрожанием на 1 px',
+    street:'выгоревший асфальт с битумными швами, облупленная разметка, крыши с бочками и антеннами',
+    refs:'Return of the Obra Dinn — старение изображения; NORCO — выцветшая болотная палитра'
+  }
+};
+
+/* =========================================================================
+   РЕНДЕР ПРЕВЬЮ (200 × 200)
+   ========================================================================= */
+function renderStyle(style){
+  const S = style.S;
+  const src = document.createElement('canvas');
+  src.width = src.height = S;
+  const sctx = src.getContext('2d');
+  sctx.imageSmoothingEnabled = false;
+  const a = makeEnv(sctx, S, style.seed);
+  style.draw(a);
+
+  let out = src;
+  if(style.block && style.block > 1){
+    const bs = Math.floor(S / style.block);
+    const half = document.createElement('canvas');
+    half.width = half.height = bs;
+    const hctx = half.getContext('2d');
+    hctx.imageSmoothingEnabled = false;
+    hctx.drawImage(src, 0, 0, bs, bs);
+    out = half;
+  }
+
+  const disp = document.createElement('canvas');
+  disp.width = disp.height = 200;
+  const dctx = disp.getContext('2d');
+  dctx.imageSmoothingEnabled = false;
+  dctx.drawImage(out, 0, 0, 200, 200);
+  return disp;
+}
+
+const grid = document.getElementById('grid');
+STYLES.forEach((style, i) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const head = document.createElement('div');
+  head.className = 'head';
+  head.innerHTML = '<span class="num">' + String(i+1).padStart(2,'0') + '</span><span class="name">' + style.name + '</span>';
+
+  const thumb = document.createElement('div');
+  thumb.className = 'thumb';
+  thumb.appendChild(renderStyle(style));
+
+  const one = document.createElement('p');
+  one.className = 'one';
+  one.textContent = style.one;
+
+  const chips = document.createElement('div');
+  chips.className = 'chips';
+  style.chips.forEach(c => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.style.background = c;
+    chip.title = c;
+    chips.appendChild(chip);
+  });
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  style.meta.forEach(m => {
+    const s = document.createElement('span');
+    s.textContent = m;
+    meta.appendChild(s);
+  });
+
+  card.appendChild(head);
+  card.appendChild(thumb);
+  card.appendChild(one);
+  card.appendChild(chips);
+  card.appendChild(meta);
+
+  const d = DETAILS[style.id];
+  if (d) {
+    const det = document.createElement('details');
+    det.className = 'spec';
+    const sum = document.createElement('summary');
+    sum.textContent = 'Технический разбор';
+    const dl = document.createElement('dl');
+    [
+      ['пиксель', d.pixel], ['палитра', d.pal], ['техника', d.tech], ['свет', d.light],
+      ['машина', d.car], ['персонаж', d.hero], ['улица', d.street]
+    ].forEach(([k, v]) => {
+      const dt = document.createElement('dt'); dt.textContent = k;
+      const dd = document.createElement('dd'); dd.innerHTML = v;
+      dl.appendChild(dt); dl.appendChild(dd);
+    });
+    const refs = document.createElement('div');
+    refs.className = 'refs';
+    refs.innerHTML = 'Референсы: <i>' + d.refs + '</i>';
+    det.appendChild(sum); det.appendChild(dl); det.appendChild(refs);
+    card.appendChild(det);
+  }
+
+  grid.appendChild(card);
+});
+</script>
+</body>
+</html>
