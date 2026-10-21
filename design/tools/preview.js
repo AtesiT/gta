@@ -1,5 +1,5 @@
-// Dev-only raster preview of design/styles.html — no browser available in this sandbox.
-// Implements a tiny subset of the Canvas2D API so the exact same drawing code can be
+// Dev-only raster preview of design/styles.html — no browser in the sandbox.
+// Implements a tiny subset of Canvas2D so the exact same drawing code can be
 // rendered to PNG for inspection. Not part of the game.
 const fs = require('fs');
 const zlib = require('zlib');
@@ -28,7 +28,7 @@ function parseColor(s) {
 }
 
 class Grad {
-  constructor(kind, args, stops) { this.kind = kind; this.args = args; this.stops = []; }
+  constructor(kind, args) { this.kind = kind; this.args = args; this.stops = []; }
   addColorStop(t, c) { this.stops.push([t, parseColor(c)]); this.stops.sort((a, b) => a[0] - b[0]); }
   at(x, y) {
     let t;
@@ -65,6 +65,7 @@ class Ctx {
     this.globalAlpha = 1;
     this.globalCompositeOperation = 'source-over';
     this.stack = [];
+    this.imageSmoothingEnabled = false;
   }
   save() { this.stack.push({ a: this.globalAlpha, c: this.globalCompositeOperation }); }
   restore() { const s = this.stack.pop(); if (s) { this.globalAlpha = s.a; this.globalCompositeOperation = s.c; } }
@@ -76,7 +77,7 @@ class Ctx {
         const sx = Math.min(img.width - 1, Math.floor(x * img.width / dw));
         const sy = Math.min(img.height - 1, Math.floor(y * img.height / dh));
         const c = img.colorAt(sx, sy);
-        this._px(Math.round(dx) + x, Math.round(dy) + y, c[0], c[1], c[2], c[3] / 255 * this.globalAlpha);
+        this._px(Math.round(dx) + x, Math.round(dy) + y, c[0], c[1], c[2], (c[3] / 255) * this.globalAlpha);
       }
     }
   }
@@ -86,7 +87,7 @@ class Ctx {
     return [this.data[i], this.data[i + 1], this.data[i + 2], 255];
   }
   _px(x, y, r, g, b, a) {
-    if (x < 0 || y < 0 || x >= this.w || y >= this.h || a <= 0) return;
+    if (x < 0 || y < 0 || x >= this.w || y >= this.h || !(a > 0)) return;
     const i = (y * this.w + x) * 3;
     if (this.globalCompositeOperation === 'lighter') {
       this.data[i] += r * a; this.data[i + 1] += g * a; this.data[i + 2] += b * a;
@@ -103,63 +104,39 @@ class Ctx {
     const col = grad ? null : parseColor(this.fillStyle);
     for (let yy = y; yy < y + h; yy++) {
       for (let xx = x; xx < x + w; xx++) {
-        let c = grad ? grad.at(xx + 0.5, yy + 0.5) : col;
+        const c = grad ? grad.at(xx + 0.5, yy + 0.5) : col;
         this._px(xx, yy, c[0], c[1], c[2], (c[3] / 255) * this.globalAlpha);
       }
     }
   }
   createRadialGradient(x0, y0, r0, x1, y1, r1) { return new Grad('radial', [x0, y0, r0, x1, y1, r1]); }
   createLinearGradient(x0, y0, x1, y1) { return new Grad('linear', [x0, y0, x1, y1]); }
+  clearRect() {}
+  beginPath() {} moveTo() {} lineTo() {} stroke() {}
 }
 
 function makeCanvas(w, h) {
   const ctx = new Ctx(w, h);
-  const canvas = { width: w, height: h, getContext: () => ctx, _ctx: ctx,
-    colorAt: (x, y) => ctx.colorAt(x, y) };
-  return canvas;
+  return { width: w, height: h, getContext: () => ctx, _ctx: ctx, colorAt: (x, y) => ctx.colorAt(x, y) };
 }
 
-const sandbox = { console, Math, document: { createElement: t => makeCanvas(1, 1) } };
+const sandbox = { console, Math, document: { createElement: () => makeCanvas(1, 1) } };
 vm.createContext(sandbox);
-vm.runInContext(script + '\n;globalThis.__STYLES = STYLES;', sandbox);
-const STYLES = sandbox.__STYLES;
+vm.runInContext(script + '\n;globalThis.__DATA = { STYLES, paintScene, paintTiles, paintSprites, makeEnv };', sandbox);
+const { STYLES, paintScene, paintTiles, paintSprites, makeEnv } = sandbox.__DATA;
 
-function renderStyle(style) {
-  const S = style.S;
-  const src = makeCanvas(S, S);
-  const a = sandbox.makeEnv(src.getContext('2d'), S, style.seed);
-  style.draw(a);
-  let out = src;
-  if (style.block && style.block > 1) {
-    const bs = Math.floor(S / style.block);
-    const half = makeCanvas(bs, bs);
-    half.getContext('2d').drawImage(src, 0, 0, bs, bs);
-    out = half;
-  }
-  const disp = makeCanvas(200, 200);
-  disp.getContext('2d').drawImage(out, 0, 0, 200, 200);
-  return disp;
+function render(style, kind) {
+  const dims = kind === 'scene' ? [480, 480] : (kind === 'tiles' ? [480, 96] : [480, 160]);
+  const cv = makeCanvas(dims[0], dims[1]);
+  const envSize = kind === 'tiles' ? 96 : (kind === 'sprites' ? 160 : 480);
+  const a = makeEnv(cv.getContext('2d'), envSize, style.seed);
+  if (kind === 'scene') paintScene(a, style);
+  else if (kind === 'tiles') paintTiles(a, style);
+  else paintSprites(a, style);
+  return cv;
 }
 
-module.exports = { Ctx, makeCanvas, makeEnv: sandbox.makeEnv, STYLES, renderStyle };
-
-const tiles = STYLES.map(renderStyle);
-
-// contact sheet
-const COLS = 5, GAP = 10, PAD = 0, CELL = 200;
-const W = COLS * CELL + (COLS + 1) * GAP;
-const ROWS = Math.ceil(tiles.length / COLS);
-const H = ROWS * CELL + (ROWS + 1) * GAP;
-const sheet = makeCanvas(W, H);
-sheet.getContext('2d').fillStyle = '#101014';
-sheet.getContext('2d').fillRect(0, 0, W, H);
-tiles.forEach((t, i) => {
-  const cx = GAP + (i % COLS) * (CELL + GAP);
-  const cy = GAP + Math.floor(i / COLS) * (CELL + GAP);
-  sheet.getContext('2d').drawImage(t, cx, cy, CELL, CELL);
-});
-
-// PNG encode
+// PNG
 function crc32(buf) {
   let c, crc = 0xffffffff;
   for (let n = 0; n < buf.length; n++) {
@@ -178,20 +155,18 @@ function chunk(type, data) {
 function writePNG(canvas, file) {
   const { width: w, height: h } = canvas;
   const raw = Buffer.alloc((w * 3 + 1) * h);
+  const fix = v => Math.max(0, Math.min(255, isFinite(v) ? Math.round(v) : 0));
   for (let y = 0; y < h; y++) {
     raw[y * (w * 3 + 1)] = 0;
     for (let x = 0; x < w; x++) {
       const c = canvas.getContext('2d').colorAt(x, y);
       const o = y * (w * 3 + 1) + 1 + x * 3;
-      const fix = v => Math.max(0, Math.min(255, isFinite(v) ? v : 0));
-      raw[o] = fix(c[0]);
-      raw[o + 1] = fix(c[1]);
-      raw[o + 2] = fix(c[2]);
+      raw[o] = fix(c[0]); raw[o + 1] = fix(c[1]); raw[o + 2] = fix(c[2]);
     }
   }
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4);
-  ihdr[8] = 8; ihdr[9] = 2; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
+  ihdr[8] = 8; ihdr[9] = 2;
   const png = Buffer.concat([
     Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
     chunk('IHDR', ihdr),
@@ -203,8 +178,36 @@ function writePNG(canvas, file) {
 
 const outDir = path.join(ROOT, 'design/preview');
 fs.mkdirSync(outDir, { recursive: true });
-writePNG(sheet, path.join(outDir, 'contact-sheet.png'));
-tiles.forEach((t, i) => {
-  writePNG(t, path.join(outDir, String(i + 1).padStart(2, '0') + '-' + STYLES[i].id + '.png'));
+
+const scenes = [];
+STYLES.forEach((style, i) => {
+  const scene = render(style, 'scene');
+  const tiles = render(style, 'tiles');
+  const sprites = render(style, 'sprites');
+  scenes.push(scene);
+  const base = String(i + 1).padStart(2, '0') + '-' + style.id;
+  writePNG(scene, path.join(outDir, base + '.png'));
+
+  const card = makeCanvas(480, 480 + 8 + 96 + 8 + 160);
+  const cctx = card.getContext('2d');
+  cctx.fillStyle = '#0f0f12'; cctx.fillRect(0, 0, 480, card.height);
+  cctx.drawImage(scene, 0, 0);
+  cctx.drawImage(tiles, 0, 488);
+  cctx.drawImage(sprites, 0, 592);
+  writePNG(card, path.join(outDir, base + '-card.png'));
 });
-console.log('rendered', tiles.length, 'styles ->', outDir, 'sheet', W + 'x' + H);
+
+// contact sheet: 5 × 2, scenes at 384
+const CELL = 384, GAP = 12, COLS = 5;
+const W = COLS * CELL + (COLS + 1) * GAP;
+const H = 2 * CELL + 3 * GAP;
+const sheet = makeCanvas(W, H);
+const sctx = sheet.getContext('2d');
+sctx.fillStyle = '#0f0f12'; sctx.fillRect(0, 0, W, H);
+scenes.forEach((sc, i) => {
+  const cx = GAP + (i % COLS) * (CELL + GAP);
+  const cy = GAP + Math.floor(i / COLS) * (CELL + GAP);
+  sctx.drawImage(sc, cx, cy, CELL, CELL);
+});
+writePNG(sheet, path.join(outDir, 'contact-sheet.png'));
+console.log('rendered', STYLES.length, 'styles ->', outDir, 'sheet', W + 'x' + H);
