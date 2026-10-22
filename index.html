@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#0c0b12" />
+<title>NIGHT STREETS — пиксельная прогулка по городу</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230c0b12'/%3E%3Crect x='3' y='4' width='10' height='4' fill='%23ffcf8a'/%3E%3Crect x='4' y='9' width='2' height='4' fill='%23ff7aa8'/%3E%3Crect x='10' y='9' width='2' height='4' fill='%2365e6d7'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div id="stage">
+    <canvas id="game"></canvas>
+  </div>
+
+  <div id="loading" class="overlay">
+    <div class="loader">
+      <div class="loader-title">NIGHT STREETS</div>
+      <div class="loader-bar"><span></span></div>
+      <div class="loader-text">строим квартал…</div>
+    </div>
+  </div>
+
+  <div id="intro" class="overlay intro">
+    <div class="intro-card">
+      <div class="hero" aria-hidden="true"></div>
+      <div class="marquee">
+        <span class="neon">NIGHT</span><span class="neon pink">STREETS</span>
+      </div>
+      <p class="tagline">Пиксельный город сверху. Одна улица, много огней.</p>
+      <ul class="controls">
+        <li><b>W A S D</b> / <b>стрелки</b> — идти</li>
+        <li><b>Shift</b> — бежать</li>
+        <li><b>E</b> — взаимодействие (кафе, магазины, лоток)</li>
+        <li><b>H</b> — показать/скрыть подсказки</li>
+        <li>Телефон: тяни палец по левой половине экрана, тап справа — действие</li>
+      </ul>
+      <button id="start" class="start-btn">НАЧАТЬ ПРОГУЛКУ</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
