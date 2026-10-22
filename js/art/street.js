@@ -1,7 +1,8 @@
 // Builds the static city block: buildings, park, sidewalk, road, rooftops.
 import { createCanvas, ctx2d, makeRng, px, line, circle, drawText, drawTextCentered, textWidth, shade, mix, rgba, speckle } from '../util.js';
 import { C } from '../palette.js';
-import { makeFacade, makeRoof, FACADE, WORLD } from './buildings.js';
+import { makeFacade, FACADE, WORLD } from './buildings.js';
+import { makeRoof } from './roofs.js';
 import { getProp } from './props.js';
 
 export { WORLD };
@@ -31,7 +32,7 @@ function pavement(ctx, x0, y0, w, h, rng) {
     row++;
   }
   // seams
-  for (let x = x0; x < x0 + w; x += tw) px(ctx, x, y0, 1, h, rgba('#46415220', 1));
+  for (let x = x0; x < x0 + w; x += tw) px(ctx, x, y0, 1, h, 'rgba(62,58,74,0.35)');
   // dirt along the wall side + speckles
   for (let i = 0; i < (w * h) / 900; i++) px(ctx, x0 + rng.int(0, w), y0 + rng.int(0, h), 1, 1, rng.pick(['#79758a', '#5f5b6d', '#8b8798', '#4e4a5c']));
   // gum spots
@@ -385,34 +386,142 @@ export function buildStreet() {
   px(ctx, 470, 0, 5, WORLD.top, '#141119');
 
   // ============================================================ the park
-  px(ctx, PARK.x0, 0, PARK.x1 - PARK.x0, WORLD.top, '#16241b');
-  grass(ctx, PARK.x0, 0, PARK.x1 - PARK.x0, WORLD.top, rng);
+  const px0 = PARK.x0, px1 = PARK.x1, pw = px1 - px0;
+  px(ctx, px0, 0, pw, WORLD.top, '#17261c');
+  grass(ctx, px0, 0, pw, WORLD.top, rng);
   // hedge / rear wall
-  for (let x = PARK.x0; x < PARK.x1; x += 8) {
+  for (let x = px0; x < px1; x += 8) {
     circle(ctx, x + 4, 26 + Math.sin(x * 0.09) * 4, rng.int(9, 13), rng.pick(C.foliage.slice(1)));
   }
-  for (let x = PARK.x0; x < PARK.x1; x += 6) circle(ctx, x + 3, 20, rng.int(6, 9), rng.pick(C.foliage));
-  px(ctx, PARK.x0, 0, PARK.x1 - PARK.x0, 18, '#1a2a1f');
+  for (let x = px0; x < px1; x += 6) circle(ctx, x + 3, 20, rng.int(6, 9), rng.pick(C.foliage));
+  px(ctx, px0, 0, pw, 18, '#1a2a1f');
   // far backdrop building silhouette over the hedge
-  px(ctx, PARK.x0 + 40, 0, 120, 34, '#1c1a24');
-  for (let x = PARK.x0 + 48; x < PARK.x0 + 152; x += 16) px(ctx, x, 10, 7, 9, rgba('#ffca85', 0.35));
-  px(ctx, PARK.x0 + 230, 0, 90, 24, '#221f2a');
-  for (let x = PARK.x0 + 238; x < PARK.x0 + 312; x += 14) px(ctx, x, 8, 6, 8, rgba('#ffca85', 0.25));
+  px(ctx, px0 + 40, 0, 120, 34, '#1c1a24');
+  for (let x = px0 + 48; x < px0 + 152; x += 16) px(ctx, x, 10, 7, 9, rgba('#ffca85', 0.35));
+  px(ctx, px0 + 230, 0, 90, 24, '#221f2a');
+  for (let x = px0 + 238; x < px0 + 312; x += 14) px(ctx, x, 8, 6, 8, rgba('#ffca85', 0.25));
 
-  parkFence(ctx, PARK.x0, PARK.x1, 444, PARK.gate0, PARK.gate1);
-  // path from the gate into the park
-  px(ctx, PARK.gate0 + 8, 300, 40, 150, rgba('#54432f', 0.35));
+  // ---- plaza with an old fountain in the middle of the park
+  const plazaX = Math.round((PARK.gate0 + PARK.gate1) / 2);
+  const plazaY = 268;
+  const plazaR = 74;
+  // paving
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(plazaX, plazaY, plazaR, Math.round(plazaR * 0.62), 0, 0, Math.PI * 2);
+  ctx.clip();
+  px(ctx, plazaX - plazaR, plazaY - plazaR, plazaR * 2, plazaR * 2, '#6e6a7c');
+  for (let y = -plazaR; y < plazaR; y += 12) {
+    const off = Math.abs(Math.floor(y / 12) % 2) ? 10 : 0;
+    for (let x = -plazaR; x < plazaR; x += 20) {
+      px(ctx, plazaX + x + off, plazaY + y, 18, 10, mix(C.pave, rng.chance(0.5) ? C.paveLight : C.paveDark, rng() * 0.6));
+      px(ctx, plazaX + x + off, plazaY + y, 18, 1, 'rgba(190,186,205,0.12)');
+    }
+  }
+  speckle(ctx, plazaX - plazaR, plazaY - plazaR, plazaR * 2, plazaR * 2, ['#7d788c', '#615d70', '#8a8598'], 260, rng, 1);
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(50,46,60,0.6)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(plazaX, plazaY, plazaR, Math.round(plazaR * 0.62), 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // paths: gate -> plaza and plaza -> left/right
+  // gravel-and-paver paths: soft blobby band, then individual stones and dither
+  const pathDraw = (x0, y0, x1, y1, wid) => {
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    const steps = Math.ceil(len * 1.4);
+    const pts = [];
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const wobble = Math.sin(t * 9.1) * 2.4 + Math.sin(t * 3.3 + 1) * 1.8;
+      const nx = -(y1 - y0) / len, ny = (x1 - x0) / len;
+      pts.push({
+        x: x0 + (x1 - x0) * t + nx * wobble,
+        y: y0 + (y1 - y0) * t + ny * wobble,
+        r: wid * (0.82 + 0.18 * Math.sin(t * 5.7)),
+      });
+    }
+    // base band
+    for (const p of pts) {
+      circle(ctx, p.x, p.y, p.r + 1, 'rgba(38,44,32,0.55)');
+    }
+    for (const p of pts) {
+      circle(ctx, p.x, p.y - 0.5, p.r, '#4a4438');
+    }
+    for (const p of pts) {
+      circle(ctx, p.x, p.y - 1, p.r - 2, '#565043');
+    }
+    // pavers
+    for (const p of pts) {
+      for (let i = 0; i < 7; i++) {
+        const a = rng() * Math.PI * 2, rr = rng() * (p.r - 2);
+        px(ctx, p.x + Math.cos(a) * rr, p.y + Math.sin(a) * rr * 1.1, rng.int(2, 4), rng.int(1, 2),
+          rng.pick(['#6b6353', '#514b3f', '#7a7161', '#433d33']));
+      }
+      // sparse grass poking through at the edges
+      for (let i = 0; i < 2; i++) {
+        const a = rng() * Math.PI * 2;
+        px(ctx, p.x + Math.cos(a) * (p.r - 1), p.y + Math.sin(a) * (p.r - 1), 1, 1, rng.pick(['#3a5233', '#2f4a30']));
+      }
+    }
+  };
+  pathDraw(plazaX, 446, plazaX, plazaY + 30, 12);
+  pathDraw(plazaX - 10, plazaY, px0 + 50, plazaY + 46, 7);
+  pathDraw(plazaX + 10, plazaY, px1 - 52, plazaY + 14, 7);
+  pathDraw(plazaX, plazaY - 10, plazaX + 26, 132, 6);
+
+  const fR = 34;
+  const fountainY = plazaY;
+
+  // flower beds along the paths
+  const flowerBeds = [[px0 + 86, 352, 62, 22], [px1 - 84, 322, 56, 20], [px0 + 30, 176, 54, 20], [px1 - 70, 178, 44, 18]];
+  for (const [bx0, by0, bw, bh] of flowerBeds) {
+    px(ctx, bx0 - 3, by0 - 3, bw + 6, bh + 6, '#3a2f28');
+    px(ctx, bx0 - 1, by0 - 1, bw + 2, bh + 2, '#5b4031');
+    px(ctx, bx0, by0, bw, bh, '#2f3b29');
+    speckle(ctx, bx0, by0, bw, bh, ['#37502f', '#455e37', '#2a3b26'], bw * bh / 4, rng, 1);
+    for (let i = 0; i < bw * bh / 8; i++) {
+      px(ctx, bx0 + rng.int(0, bw - 1), by0 + rng.int(0, bh - 1), 1, 1, rng.pick(['#8d5a8c', '#c9645c', '#e0b45a', '#6d86b8', '#dfd2bb', '#b0563f']));
+    }
+  }
+
+  parkFence(ctx, px0, px1, 444, PARK.gate0, PARK.gate1);
 
   // park furniture (props with collision)
-  props.push({ kind: 'tree', seed: 3, x: PARK.x0 + 72, y: 300, solid: 12 });
-  props.push({ kind: 'tree', seed: 5, x: PARK.x0 + 214, y: 190, solid: 12, conifer: true });
-  props.push({ kind: 'tree', seed: 9, x: PARK.x0 + 96, y: 132, solid: 12 });
-  props.push({ kind: 'tree', seed: 12, x: PARK.x0 + 232, y: 320, solid: 12 });
-  props.push({ kind: 'bench', seed: 2, x: PARK.x0 + 160, y: 250, solid: 34 });
-  props.push({ kind: 'bench', seed: 4, x: PARK.x0 + 60, y: 214, solid: 34 });
-  props.push({ kind: 'lamp', seed: 1, x: PARK.x0 + 130, y: 168, solid: 7, light: { r: 66, color: C.neonAmber } });
-  props.push({ kind: 'lamp', seed: 2, x: PARK.x0 + 250, y: 380, solid: 7, light: { r: 66, color: C.neonAmber } });
-  props.push({ kind: 'trash', seed: 1, x: PARK.x0 + 30, y: 330, solid: 9 });
+  const parkProps = [
+    ['tree', 3, px0 + 36, 232, 12],
+    ['tree', 5, px0 + 74, 132, 12],
+    ['tree', 9, px1 - 44, 132, 12],
+    ['tree', 12, px1 - 26, 300, 12],
+    ['tree', 14, px0 + 22, 300, 12],
+    ['tree', 17, px1 - 96, 392, 12],
+    ['bench', 2, plazaX - 84, plazaY + 6, 34],
+    ['bench', 4, plazaX + 78, plazaY - 12, 34],
+    ['bench', 6, px0 + 46, 398, 34],
+    ['lamp', 1, plazaX - 60, plazaY - 46, 7],
+    ['lamp', 2, plazaX + 60, plazaY - 46, 7],
+    ['lamp', 3, px0 + 24, 392, 7],
+    ['trash', 1, plazaX + 96, plazaY + 24, 9],
+    ['trash', 2, plazaX - 98, plazaY - 22, 9],
+    ['hydrant', 1, px0 + 132, 414, 7],
+  ];
+  for (const [kind, seed, x, y, solid] of parkProps) {
+    const extra = kind === 'lamp' ? { light: { r: 70, color: C.neonAmber } } : {};
+    const sprite = getProp(kind, seed);
+    props.push({ kind, seed, x, y, solid, sprite, ...extra });
+    if (solid) solids.push({ x: x - solid, y: y - 8, w: solid * 2, h: 14 });
+  }
+  // the fountain is a sorted prop so the player can walk behind it
+  {
+    const sprite = getProp('fountain', 1);
+    props.push({ kind: 'fountain', seed: 1, x: plazaX, y: plazaY + 26, sprite });
+    solids.push({ x: plazaX - fR, y: plazaY - Math.round(fR * 0.5), w: fR * 2, h: Math.round(fR * 0.62) });
+  }
+  // flower beds too
+  for (const [bx0, by0, bw, bh] of flowerBeds) solids.push({ x: bx0 - 2, y: by0 - 2, w: bw + 4, h: bh + 4 });
+  // fountain light
+  lamps.push({ x: plazaX, y: plazaY - 24, r: 96, color: '#9fd4e8', glow: 0.85, flicker: 1.3 });
 
   // ============================================================ sidewalks
   pavement(ctx, 0, WORLD.top, W, 130, rng);
@@ -472,10 +581,57 @@ export function buildStreet() {
 
   // ============================================================ south rooftops
   const roofs = [
-    { x: 0, w: 600, seed: 91, waterTower: { x: 380, y: 130 }, sign: null, shed: { x: 150, y: 40 }, penthouse: { x: 60, y: 120 } },
-    { x: 600, w: 600, seed: 92, waterTower: null, sign: { text: 'MOTEL', color: C.neonPink, scale: 2 }, shed: null, penthouse: { x: 210, y: 110 } },
-    { x: 1200, w: 600, seed: 93, waterTower: { x: 420, y: 150 }, sign: { text: 'DINER', color: C.neonAmber, scale: 2 }, shed: { x: 90, y: 40 }, penthouse: { x: 190, y: 128 } },
-    { x: 1800, w: 600, seed: 94, waterTower: null, sign: { text: 'HOTEL', color: C.neonTeal, scale: 2 }, shed: { x: 470, y: 40 }, penthouse: { x: 120, y: 120 } },
+    {
+      x: 0, w: 600, seed: 91, style: 'tar',
+      waterTower: { x: 430, y: 176, scale: 1.15 },
+      bulkhead: { x: 58, y: 74, w: 84, h: 58, palette: { wall: '#4a3a35', wallDark: '#33272a', cap: '#575063' } },
+      chimneys: [{ x: 196, y: 196 }, { x: 552, y: 92 }],
+      skylights: [{ x: 300, y: 66, w: 36, h: 22 }, { x: 250, y: 240, w: 30, h: 18, lit: false }],
+      acUnits: [{ x: 120, y: 210 }, { x: 344, y: 196 }],
+      vents: [{ x: 176, y: 132 }, { x: 508, y: 250 }],
+      antenna: { x: 520, y: 214 },
+      garden: { x: 300, y: 258, w: 128, h: 46 },
+      pigeons: { x: 236, y: 96 },
+      cables: true,
+    },
+    {
+      x: 600, w: 600, seed: 92, style: 'ballast',
+      sign: { text: 'MOTEL', color: C.neonPink, scale: 2 },
+      bulkhead: { x: 96, y: 92, w: 78, h: 54, palette: { wall: '#4a4148', wallDark: '#332f36', cap: '#4a4656' } },
+      waterTower: { x: 478, y: 214, scale: 0.9 },
+      chimneys: [{ x: 260, y: 226 }],
+      skylights: [{ x: 400, y: 96, w: 34, h: 20 }, { x: 160, y: 236, w: 30, h: 18, lit: false }],
+      acUnits: [{ x: 340, y: 168 }, { x: 540, y: 120 }],
+      vents: [{ x: 40, y: 210 }, { x: 490, y: 260 }],
+      pigeons: { x: 230, y: 150 },
+      cables: true,
+    },
+    {
+      x: 1200, w: 600, seed: 93, style: 'slate',
+      sign: { text: 'DINER', color: C.neonAmber, scale: 2 },
+      waterTower: { x: 92, y: 158, scale: 1.05 },
+      bulkhead: { x: 352, y: 84, w: 92, h: 60, palette: { wall: '#3d4450', wallDark: '#2b3038', cap: '#414a58' } },
+      chimneys: [{ x: 248, y: 210 }, { x: 550, y: 132 }],
+      skylights: [{ x: 180, y: 88, w: 40, h: 24 }, { x: 452, y: 214, w: 30, h: 18 }],
+      acUnits: [{ x: 300, y: 176 }, { x: 520, y: 250 }],
+      vents: [{ x: 160, y: 258 }],
+      garden: { x: 258, y: 272, w: 120, h: 38 },
+      antenna: { x: 40, y: 262 },
+      cables: true,
+    },
+    {
+      x: 1800, w: 600, seed: 94, style: 'shingle',
+      sign: { text: 'HOTEL', color: C.neonTeal, scale: 2 },
+      bulkhead: { x: 470, y: 92, w: 80, h: 56, palette: { wall: '#46403a', wallDark: '#302b26', cap: '#4c463f' } },
+      waterTower: { x: 84, y: 226, scale: 0.95 },
+      chimneys: [{ x: 250, y: 186 }, { x: 548, y: 232 }],
+      skylights: [{ x: 340, y: 84, w: 36, h: 22 }, { x: 196, y: 262, w: 28, h: 18, lit: false }],
+      acUnits: [{ x: 300, y: 176 }, { x: 500, y: 170 }],
+      vents: [{ x: 130, y: 112 }],
+      antenna: { x: 400, y: 246 },
+      pigeons: { x: 258, y: 118 },
+      cables: true,
+    },
   ];
   // faint light spill from the street onto the roof edges
   for (const r of roofs) {
@@ -487,19 +643,20 @@ export function buildStreet() {
   }
   const roofLights = [];
   for (const r of roofs) {
-    const roof = makeRoof({ width: r.w, depth: WORLD.roofDepth, seed: r.seed, waterTower: r.waterTower, sign: r.sign, shed: r.shed, penthouse: r.penthouse });
-    // roof bulbs + sign glow
-    for (let x = 60; x < r.w - 30; x += 150) {
-      roofLights.push({ x: r.x + x + 1, y: WORLD.sidewalkS + 26, r: 62, color: '#ffcb84', glow: 1.0, flicker: rng() * 8 });
+    const roof = makeRoof({ width: r.w, depth: WORLD.roofDepth, seed: r.seed, ...r });
+    // service bulbs along the parapet + neon sign glow
+    for (let x = 66; x < r.w - 30; x += 150) {
+      roofLights.push({ x: r.x + x + 1, y: WORLD.sidewalkS + 22, r: 58, color: '#ffcb84', glow: 0.95, flicker: rng() * 8 });
     }
     if (r.sign) {
-      roofLights.push({ x: r.x + r.w / 2, y: WORLD.sidewalkS + 26, r: 120, color: r.sign.color, glow: 0.8, strength: 0.6, flicker: 2 });
+      roofLights.push({ x: r.x + (r.sign.x ?? r.w / 2), y: WORLD.sidewalkS + 18, r: 130, color: r.sign.color, glow: 0.75, strength: 0.55, flicker: 2 });
     }
     ctx.drawImage(roof.canvas, r.x, WORLD.sidewalkS);
-    // side wall between rooftops
-    px(ctx, r.x - 3, WORLD.sidewalkS, 6, WORLD.roofDepth, '#151219');
-    px(ctx, r.x - 3, WORLD.sidewalkS, 2, WORLD.roofDepth, '#2a2530');
-    if (r.sign) signs.push({ x: r.x + r.w / 2, y: WORLD.sidewalkS + 30, text: r.sign.text, color: r.sign.color });
+    // party wall between neighbouring roofs
+    px(ctx, r.x - 4, WORLD.sidewalkS, 8, WORLD.roofDepth, '#16131b');
+    px(ctx, r.x - 4, WORLD.sidewalkS, 2, WORLD.roofDepth, '#2e2934');
+    px(ctx, r.x - 4, WORLD.sidewalkS, 8, 6, '#3a3542');
+    if (r.sign) signs.push({ x: r.x + (r.sign.x ?? r.w / 2), y: WORLD.sidewalkS + 22, text: r.sign.text, color: r.sign.color });
   }
   // street-facing shadow of the south parapet
   const sg = ctx.createLinearGradient(0, WORLD.sidewalkS, 0, WORLD.sidewalkS + 22);
@@ -556,13 +713,13 @@ export function buildStreet() {
   add('lamp', 980, WORLD.laneS + 26, { solid: 7, light: { r: 92, color: C.neonAmber } });
   add('lamp', 1520, WORLD.laneS + 26, { solid: 7, light: { r: 92, color: C.neonAmber } });
   add('lamp', 2080, WORLD.laneS + 26, { solid: 7, light: { r: 92, color: C.neonAmber } });
-  add('planter', 1130, WORLD.laneS + 56, { solid: 12 });
+  add('planter', 1005, WORLD.laneS + 56, { solid: 12 });
   add('newsbox', 1880, WORLD.laneS + 66, { solid: 9, seed: 3 });
   add('trash', 1700, WORLD.laneS + 70, { solid: 9 });
   add('cone', 1440, WORLD.laneS + 80);
   add('cone', 1456, WORLD.laneS + 86);
   add('hydrant', 2260, WORLD.laneS + 66, { solid: 7 });
-  add('bench', 1200, WORLD.laneS + 78, { solid: 30, seed: 5 });
+  add('bench', 1415, WORLD.laneS + 78, { solid: 30, seed: 5 });
   add('bench', 1760, WORLD.laneS + 78, { solid: 30, seed: 6 });
   add('trash', 1500, WORLD.laneS + 76, { solid: 9 });
   add('planter', 2000, WORLD.laneS + 56, { solid: 12, seed: 4 });
@@ -610,7 +767,7 @@ export function buildStreet() {
 
   // Slice the big baked layers into tiles: blitting from modest canvases is much
   // friendlier to canvas backends (and keeps per-frame uploads small).
-  const TILE = 600;
+  const TILE = 1024;
   const slice = (src) => {
     const out = [];
     for (let ty = 0; ty < H; ty += TILE) {
@@ -632,6 +789,14 @@ export function buildStreet() {
   const tiles = slice(canvas);
   const lightTiles = slice(lightBase);
   const glowTiles = slice(glowBase);
+  // zoomed-out minimap: the whole block scaled down once, no per-frame scaling
+  const miniScale = 1 / 8;
+  const mini = createCanvas(Math.ceil(W * miniScale), Math.ceil(H * miniScale));
+  ctx2d(mini).drawImage(canvas, 0, 0, W, H, 0, 0, mini.width, mini.height);
+  lightBase.width = 1;
+  lightBase.height = 1;
+  glowBase.width = 1;
+  glowBase.height = 1;
 
-  return { canvas, tiles, props, lamps, dynamicLights, lightTiles, glowTiles, solids, signs, park: PARK };
+  return { canvas, tiles, mini, miniScale, props, lamps, dynamicLights, lightTiles, glowTiles, solids, signs, park: PARK };
 }

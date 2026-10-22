@@ -44,8 +44,11 @@ function resize() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const cw = window.innerWidth;
   const ch = window.innerHeight;
-  // choose an integer upscale so every art pixel is a crisp square
-  let scale = Math.max(1, Math.min(7, Math.round(Math.min(cw / 460, ch / 300))));
+  // Pick an upscale in half steps: a slightly wider view than before (about
+  // 640x360 art pixels) so more of the block fits on screen, while pixels stay
+  // crisp and evenly sized.
+  let scale = Math.min(cw / 640, ch / 360);
+  scale = Math.max(1.5, Math.min(6, Math.round(scale * 2) / 2));
   // never let the view grow larger than the block itself
   scale = Math.max(scale, Math.ceil(cw / 2300), Math.ceil(ch / 1180));
   const viewW = Math.ceil(cw / scale);
@@ -148,6 +151,11 @@ function init() {
     const world = buildStreet();
     state.world = world;
     hud.buildMiniMap(WORLD);
+    // use the real downscaled block for the minimap
+    if (world.mini) {
+      hud.miniMap = world.mini;
+      hud.miniScale = world.miniScale;
+    }
     state.player = placePlayer();
     state.npcs = spawnNpcs();
     state.cars = spawnCars();
@@ -169,6 +177,7 @@ const SHOP_PROMPTS = [
   { x: 1750, y: WORLD.top + 40, label: 'LIQUOR', line: 'The clerk says come back later.', cash: 0 },
   { x: 1990, y: WORLD.top + 40, label: 'PIZZA', line: 'A slice to go. -$5', cash: -5, hp: 8 },
   { x: 520, y: WORLD.laneS + 60, label: 'NIGHT STALL', line: 'Noodles from the cart. -$6', cash: -6, hp: 5 },
+  { x: 1700, y: WORLD.laneS + 60, label: 'NIGHT STALL', line: 'Soup from the cart. -$5', cash: -5, hp: 5 },
 ];
 
 function nearestPrompt() {

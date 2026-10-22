@@ -216,17 +216,28 @@ function drawDoorBay(ctx, x, y, w, h, rng, opts = {}) {
   px(ctx, dx + half - 3, dy + Math.floor(h * 0.52), 2, 3, '#c9a55a');
   px(ctx, dx + half + 2, dy + Math.floor(h * 0.52), 2, 3, '#c9a55a');
   px(ctx, dx, dy + 2, dw, 3, rgba(C.lit, 0.5));
-  // steps
-  const sw = dw + 16;
+  // stoop: a stone landing with two steps and low railings, blending with the kerb
+  const sw = dw + 14;
   const sx = x + Math.floor((w - sw) / 2);
-  px(ctx, sx, y + h, sw, 3, C.stoneLight);
-  px(ctx, sx + 2, y + h + 3, sw - 4, 3, C.stone);
-  px(ctx, sx + 4, y + h + 6, sw - 8, 3, shade(C.stone, -6));
-  px(ctx, sx, y + h + 9, sw - 6, 1, rgba('#1a1620', 0.45));
-  for (const rx of [sx + 5, sx + sw - 8]) {
-    px(ctx, rx, y + h - 16, 2, 25, C.metalDark);
-    px(ctx, rx + 2, y + h - 16, 5, 2, C.metalDark);
-    for (let i = 0; i < 3; i++) px(ctx, rx, y + h - 5 + i * 4, 2, 2, C.metal);
+  const sy = (opts.baseY ?? (y + h)) - 12;
+  const stepsH = 12;
+  px(ctx, sx - 2, sy, sw + 4, stepsH + 2, '#2f2b38');
+  px(ctx, sx, sy, sw, 3, '#7a7488');
+  px(ctx, sx, sy, sw, 1, '#948ea2');
+  px(ctx, sx + 1, sy + 3, sw - 2, 3, '#6b6679');
+  px(ctx, sx + 2, sy + 6, sw - 4, 3, '#5a5568');
+  px(ctx, sx, sy + 2, sw, 1, 'rgba(20,16,26,0.35)');
+  px(ctx, sx, sy + 5, sw, 1, 'rgba(20,16,26,0.35)');
+  px(ctx, sx + 2, sy + stepsH, sw - 4, 1, 'rgba(12,10,16,0.5)');
+  // kerb shadow to the sides of the stoop
+  px(ctx, sx - 2, sy + 2, 2, stepsH, '#3b3746');
+  px(ctx, sx + sw, sy + 2, 2, stepsH, '#3b3746');
+  // railings: posts + handrail, dark metal with a lit edge
+  for (const rx of [sx + 3, sx + sw - 5]) {
+    px(ctx, rx, sy - 14, 2, 14 + stepsH, '#23202b');
+    px(ctx, rx, sy - 14, 1, 14 + stepsH, '#3a3644');
+    px(ctx, rx - 1, sy - 15, 4, 2, '#2e2a36');
+    for (let i = 0; i < 3; i++) px(ctx, rx, sy - 7 + i * 4, 2, 1, '#302c38');
   }
   drawSconce(ctx, dx - 10, y + 4);
   drawSconce(ctx, dx + dw + 9, y + 4);
@@ -377,7 +388,7 @@ export function makeFacade(opts) {
       px(ctx, sx, groundTop + 8, sw, H - groundTop - 20, '#2e2226');
       const awnY = groundTop + 30;
       const awH = 20;
-      drawStoreWindow(ctx, sx, awnY + awH + 5, sw, H - (awnY + awH) - 26, rng, bay.interior || 'shop', bay.warm !== false);
+      drawStoreWindow(ctx, sx, awnY + awH + 5, sw, H - (awnY + awH) - 16, rng, bay.interior || 'shop', bay.warm !== false);
       drawAwning(ctx, sx - 2, awnY, sw + 4, awH, bay.awning || C.teal);
       if (bay.sign) {
         const sc = bay.signScale || 1;
@@ -399,7 +410,7 @@ export function makeFacade(opts) {
         circle(ctx, sx + 6, H - 25, 4, '#2f5836');
       }
     } else if (bay.type === 'door') {
-      drawDoorBay(ctx, bx, groundTop + 46, bw, H - groundTop - 60, rng, bay);
+      drawDoorBay(ctx, bx, groundTop + 46, bw, H - groundTop - 74, rng, { ...bay, baseY: H });
     } else if (bay.type === 'plain') {
       px(ctx, bx + 10, H - 12 - 40, Math.min(26, bw - 18), 40, '#261d20');
       px(ctx, bx + 12, H - 12 - 38, Math.min(22, bw - 22), 36, '#33272a');
@@ -410,19 +421,38 @@ export function makeFacade(opts) {
     bx += bw;
   }
 
-  // posters / graffiti on the plinth
+  // posters / graffiti pasted on the wall above the plinth
   for (let i = 0; i < width / 90; i++) {
-    const gx = rng.int(4, Math.max(5, width - 18));
-    const gy = rng.int(H - 30, H - 16);
-    if (rng.chance(0.5)) {
-      px(ctx, gx, gy, 9, 12, rng.pick(['#b8b0a0', '#8d6c4a']));
-      px(ctx, gx + 1, gy + 1, 7, 5, rgba('#3a3038', 0.7));
-      for (let l = 0; l < 3; l++) px(ctx, gx + 1, gy + 8 + l * 1, 7, 1, rgba('#4a4048', 0.7));
+    const gx = rng.int(4, Math.max(5, width - 14));
+    const gy = rng.int(groundTop + 40, H - 34);
+    // don't paste over a door bay
+    const overDoor = bays.some((bay, idx) => {
+      let acc = 0;
+      for (let k = 0; k < idx; k++) acc += bays[k].w;
+      const bx0 = Math.round((acc * width) / totalW);
+      const bw = Math.round((bay.w * width) / totalW);
+      return bay.type === 'door' && gx > bx0 + bw * 0.25 && gx < bx0 + bw * 0.75;
+    });
+    if (overDoor) continue;
+    const shade2 = box => box;
+    const y = Math.min(H - 22, gy);
+    if (rng.chance(0.55)) {
+      // torn poster: paper with a print block and a couple of text lines
+      const pw = rng.int(7, 9), ph = rng.int(9, 12);
+      px(ctx, gx + 1, y + 1, pw, ph, 'rgba(14,10,16,0.45)');
+      px(ctx, gx, y, pw, ph, rng.pick(['#a89f8c', '#8a7a5e', '#b3ac9a']));
+      px(ctx, gx, y, pw, 1, 'rgba(240,236,222,0.25)');
+      px(ctx, gx + 1, y + 1, pw - 2, Math.max(2, Math.round(ph * 0.45)), 'rgba(52,44,48,0.7)');
+      for (let l = 0; l < 2; l++) px(ctx, gx + 1, y + ph - 4 + l * 2, pw - 2, 1, 'rgba(70,62,58,0.6)');
+      // peeling corner
+      px(ctx, gx + pw - 2, y + ph - 2, 2, 2, 'rgba(20,16,22,0.5)');
     } else {
-      ctx.fillStyle = rgba(rng.pick(['#7a4a8a', '#3a6a8a', '#8a4a3a']), 0.45);
-      for (let l = 0; l < 10; l++) ctx.fillRect(gx + Math.floor(Math.sin(l * 0.9) * 4) + 4, gy + l, rng.int(2, 5), 1);
+      // spray-paint tag
+      ctx.fillStyle = rgba(rng.pick(['#7a4a8a', '#3a6a8a', '#8a4a3a', '#4a7a5a']), 0.4);
+      for (let l = 0; l < 9; l++) ctx.fillRect(gx + Math.floor(Math.sin(l * 0.9) * 3) + 3, y + l, rng.int(2, 5), 1);
     }
   }
+
   if (opts.sconces) for (let x = 70; x < width; x += 190) drawSconce(ctx, x, groundTop + 14);
 
   // global light shaping
@@ -439,265 +469,3 @@ export function makeFacade(opts) {
   return { canvas: c, width, height: H, groundTop };
 }
 
-// ---------------------------------------------------------------------- roof
-export function makeRoof(opts) {
-  const w = Math.round(opts.width);
-  const d = Math.round(opts.depth);
-  const rng = makeRng(opts.seed ?? 7);
-  const c = createCanvas(w, d);
-  const ctx = ctx2d(c);
-
-  px(ctx, 0, 0, w, d, '#302d3a');
-  px(ctx, 0, 6, w, d - 6, '#363240');
-  speckle(ctx, 0, 6, w, d - 6, ['#3c3847', '#2e2a37', '#423e4d', '#2a2633', '#484454'], Math.floor(w * d * 0.035), rng, 1);
-  for (let y = 22; y < d; y += 34) {
-    px(ctx, 0, y, w, 1, rgba('#1b1922', 0.4));
-    px(ctx, 0, y + 1, w, 1, rgba('#4a4658', 0.28));
-  }
-  for (let i = 0; i < w / 100; i++) {
-    const yy = rng.int(14, d - 20);
-    px(ctx, rng.int(0, w), yy, rng.int(20, 60), 1, rgba('#15131b', 0.4));
-  }
-  for (let i = 0; i < w / 100; i++) {
-    px(ctx, rng.int(6, w - 50), rng.int(14, d - 34), rng.int(20, 50), rng.int(14, 28), rgba('#28242f', 0.5));
-  }
-
-  // front parapet (street facing, at the top edge)
-  px(ctx, 0, 0, w, 8, C.stoneDark);
-  px(ctx, 0, 0, w, 2, C.stoneLight);
-  px(ctx, 0, 2, w, 1, C.stone);
-  for (let x = 4; x < w; x += 16) px(ctx, x, 3, 9, 2, shade(C.stone, -12));
-  px(ctx, 0, 8, w, 6, rgba('#0e0c12', 0.3));
-  px(ctx, 0, 14, w, 3, rgba('#0e0c12', 0.14));
-  px(ctx, 0, 0, 6, d, C.stoneDark);
-  px(ctx, 0, 0, 2, d, C.stone);
-  px(ctx, w - 6, 0, 6, d, C.stoneDark);
-  px(ctx, w - 2, 0, 2, d, rgba('#6b6577', 0.55));
-
-  // graffiti on the parapet
-  for (let i = 0; i < Math.max(1, w / 380); i++) {
-    const gx = rng.int(30, Math.max(40, w - 120));
-    const col = rng.pick(['#6a4a8a', '#3a7a7a', '#8a4a4a', '#4a6a8a']);
-    for (let l = 0; l < 6; l++) px(ctx, gx + Math.floor(Math.sin(l * 0.8) * 5) + 8, 1 + l, rng.int(2, 9), 1, rgba(col, 0.5));
-  }
-
-  // rooftop equipment
-  const nUnits = Math.max(2, Math.floor(w / 110));
-  for (let i = 0; i < nUnits; i++) {
-    const ax = 30 + i * Math.floor((w - 70) / Math.max(1, nUnits)) + rng.int(0, 24);
-    const ay = rng.int(34, Math.max(40, d - 80));
-    const kind = rng.pick(['ac', 'vent', 'skylight', 'dish', 'chimney', 'ac', 'vent', 'duct']);
-    if (kind === 'ac') {
-      const aw = rng.int(20, 30), ah = rng.int(14, 20);
-      px(ctx, ax, ay + ah - 4, aw, 4, rgba('#0d0c12', 0.45));
-      px(ctx, ax, ay, aw, ah, '#4c4a57');
-      px(ctx, ax, ay, aw, 2, '#615e6d');
-      px(ctx, ax + 2, ay + 3, aw - 4, ah - 6, '#3a3845');
-      circle(ctx, ax + aw / 2, ay + ah / 2, Math.min(aw, ah) / 3, '#2b2934');
-      for (let b = 0; b < 4; b++) px(ctx, ax + 2, ay + 4 + b * 2, aw - 4, 1, '#565362');
-    } else if (kind === 'vent') {
-      px(ctx, ax, ay, 14, 9, '#3b3946');
-      px(ctx, ax, ay, 14, 1, '#565362');
-      for (let b = 0; b < 3; b++) px(ctx, ax + 2, ay + 3 + b * 2, 10, 1, '#211f28');
-      px(ctx, ax + 4, ay - 3, 5, 3, '#2c2a35');
-    } else if (kind === 'skylight') {
-      const sw = rng.int(22, 40), sh = rng.int(14, 22);
-      px(ctx, ax - 2, ay - 2, sw + 4, sh + 4, '#15131b');
-      const g = ctx.createLinearGradient(0, ay, 0, ay + sh);
-      g.addColorStop(0, '#2c3a52');
-      g.addColorStop(1, '#151d2b');
-      ctx.fillStyle = g;
-      ctx.fillRect(ax, ay, sw, sh);
-      px(ctx, ax, ay, sw, 1, '#5b6d8a');
-      for (let i = 0; i < sw; i += 8) px(ctx, ax + i, ay, 1, sh, '#1b2433');
-      if (rng.chance(0.5)) {
-        px(ctx, ax + 2, ay + 3, sw * 0.35, 2, rgba(C.lit, 0.3));
-        px(ctx, ax + 6, ay + 6, sw * 0.2, 1, rgba(C.lit, 0.18));
-      }
-    } else if (kind === 'chimney') {
-      px(ctx, ax, ay + 6, 3, 10, '#1f1c26');
-      px(ctx, ax + 10, ay + 6, 3, 10, '#1f1c26');
-      px(ctx, ax - 1, ay, 16, 8, '#4a3a38');
-      px(ctx, ax, ay + 1, 14, 5, '#5c4842');
-      px(ctx, ax - 2, ay - 2, 18, 3, '#38312f');
-      px(ctx, ax, ay - 4, 14, 2, '#2b2624');
-      for (let i = 0; i < 4; i++) px(ctx, ax + 1 + i * 4, ay + 1, 1, 5, '#453330');
-    } else if (kind === 'duct') {
-      px(ctx, ax - 2, ay - 2, 30, 14, '#3c3947');
-      px(ctx, ax, ay, 26, 10, '#4b4857');
-      px(ctx, ax, ay, 26, 2, '#5d5a6b');
-      for (let i = 0; i < 4; i++) px(ctx, ax + 2 + i * 6, ay + 2, 2, 8, '#34313e');
-      px(ctx, ax + 4, ay + 12, 12, 3, '#2c2a35');
-    } else if (kind === 'dish') {
-      px(ctx, ax + 4, ay + 7, 2, 8, '#3f3c4a');
-      circle(ctx, ax + 5, ay + 5, 6, '#5b5867');
-      circle(ctx, ax + 5, ay + 5, 4, '#7b7788');
-      circle(ctx, ax + 5, ay + 5, 2, '#494656');
-    }
-  }
-
-  // caged service bulbs along the parapet
-  for (let x = 60; x < w - 30; x += 150) {
-    const by = 20;
-    px(ctx, x, by, 2, 3, '#2a2733');
-    px(ctx, x - 3, by + 3, 8, 2, '#38343f');
-    px(ctx, x - 2, by + 5, 6, 3, '#ffce8a');
-    px(ctx, x - 1, by + 6, 4, 1, '#fff0cc');
-    const bg = ctx.createRadialGradient(x + 1, by + 6, 0, x + 1, by + 6, 26);
-    bg.addColorStop(0, 'rgba(255,200,130,0.26)');
-    bg.addColorStop(1, 'rgba(255,200,130,0)');
-    ctx.fillStyle = bg;
-    ctx.fillRect(x - 26, by - 20, 54, 54);
-  }
-
-  if (opts.waterTower) {
-    const tw = 52, th = 40;
-    const tx = opts.waterTower.x ?? Math.round(w * 0.7);
-    const ty = opts.waterTower.y ?? Math.round(d * 0.5);
-    for (const lx of [tx + 4, tx + tw - 10]) {
-      line(ctx, lx, ty + th, lx - 5, ty + th + 26, '#37333f');
-      line(ctx, lx + 2, ty + th, lx + 5, ty + th + 26, '#37333f');
-    }
-    line(ctx, tx + 6, ty + th + 3, tx + tw - 8, ty + th + 22, '#2e2b36');
-    line(ctx, tx + tw - 8, ty + th + 3, tx + 6, ty + th + 22, '#2e2b36');
-    ctx.fillStyle = rgba('#0b0a10', 0.38);
-    ctx.beginPath();
-    ctx.ellipse(tx + tw / 2 + 4, ty + th + 28, tw * 0.55, 7, 0, 0, Math.PI * 2);
-    ctx.fill();
-    px(ctx, tx, ty + 8, tw, th - 8, '#5a4038');
-    px(ctx, tx + 2, ty + 11, tw - 4, th - 14, '#6b4c40');
-    for (let yy = ty + 14; yy < ty + th; yy += 6) px(ctx, tx + 2, yy, tw - 4, 1, '#4d332c');
-    for (const yy of [ty + 12, ty + 24, ty + 34]) px(ctx, tx - 1, yy, tw + 2, 2, '#43302b');
-    for (let i = 0; i < 14; i++) {
-      const ww = Math.round(tw * (i / 14));
-      px(ctx, tx + Math.round((tw - ww) / 2), ty + 8 - i, ww, 1, i % 3 === 0 ? '#3c383f' : '#4a454d');
-    }
-    px(ctx, tx + Math.round(tw / 2) - 1, ty - 8, 2, 6, '#57515a');
-    for (let yy = ty + 10; yy < ty + th + 24; yy += 3) px(ctx, tx + tw - 5, yy, 4, 1, '#2f2b35');
-    px(ctx, tx + tw - 6, ty + 10, 1, th + 14, '#3b3640');
-    px(ctx, tx + tw - 1, ty + 10, 1, th + 14, '#3b3640');
-  }
-
-  // stair bulkhead / penthouse block, the kind that always sits mid-roof
-  if (opts.penthouse) {
-    const pw = rng.int(90, 130), ph = rng.int(58, 80);
-    const px0 = (opts.penthouse.x ?? Math.round(w * 0.45));
-    const py0 = (opts.penthouse.y ?? Math.round(d * 0.45));
-    ctx.fillStyle = rgba('#0b0a10', 0.35);
-    ctx.fillRect(px0 + 6, py0 + 8, pw, ph);
-    // brick body
-    px(ctx, px0, py0, pw, ph, '#3a2b2a');
-    for (let by = py0 + 2; by < py0 + ph; by += 4) {
-      for (let bx = px0 + (Math.floor(by / 4) % 2 ? 0 : 4); bx < px0 + pw; bx += 8) {
-        px(ctx, bx, by, 7, 3, rng.pick(['#4a3532', '#523a35', '#43302e', '#573d38']));
-      }
-    }
-    // roof cap with a slight overhang
-    px(ctx, px0 - 3, py0 - 4, pw + 6, 6, '#514a5a');
-    px(ctx, px0 - 3, py0 - 4, pw + 6, 1, '#6b6479');
-    px(ctx, px0 - 1, py0 + 2, pw + 2, 2, 'rgba(10,8,14,0.45)');
-    // little lit windows facing the street (north side)
-    for (let wx = px0 + 12; wx < px0 + pw - 14; wx += 26) {
-      px(ctx, wx, py0 + 12, 14, 12, '#221c22');
-      px(ctx, wx + 1, py0 + 13, 12, 10, rng.chance(0.5) ? '#ffca85' : '#2d3a52');
-      if (rng.chance(0.5)) px(ctx, wx + 1, py0 + 13, 12, 1, '#ffe9c2');
-      px(ctx, wx + 6, py0 + 13, 1, 10, '#221c22');
-    }
-    // door + step on the street side
-    px(ctx, px0 + Math.round(pw / 2) - 8, py0 + ph - 26, 16, 26, '#1c1519');
-    px(ctx, px0 + Math.round(pw / 2) - 7, py0 + ph - 25, 14, 24, '#3a2a28');
-    px(ctx, px0 + Math.round(pw / 2) + 3, py0 + ph - 14, 2, 3, '#c9a55a');
-    px(ctx, px0 + Math.round(pw / 2) - 11, py0 + ph, 22, 4, '#5a5666');
-    // wall lamp over the door
-    px(ctx, px0 + Math.round(pw / 2) - 11, py0 + ph - 34, 3, 3, '#ffd79b');
-    const dg = ctx.createRadialGradient(px0 + Math.round(pw / 2) - 10, py0 + ph - 32, 0, px0 + Math.round(pw / 2) - 10, py0 + ph - 32, 22);
-    dg.addColorStop(0, 'rgba(255,205,140,0.3)');
-    dg.addColorStop(1, 'rgba(255,205,140,0)');
-    ctx.fillStyle = dg;
-    ctx.fillRect(px0 + Math.round(pw / 2) - 34, py0 + ph - 56, 48, 48);
-    // vent fan on the cap
-    px(ctx, px0 + pw - 30, py0 - 10, 18, 8, '#454152');
-    px(ctx, px0 + pw - 29, py0 - 9, 16, 6, '#2c2934');
-    px(ctx, px0 + pw - 24, py0 - 8, 6, 4, '#4f4b5c');
-  }
-
-  // long pipes crossing the roof
-  for (let i = 0; i < Math.max(1, Math.floor(w / 260)); i++) {
-    const py0 = rng.int(60, d - 60);
-    const px0 = rng.int(0, 40);
-    const len = rng.int(80, 180);
-    px(ctx, px0, py0, len, 6, '#3a3744');
-    px(ctx, px0, py0, len, 2, '#524e60');
-    px(ctx, px0, py0 + 5, len, 1, '#232029');
-    for (let bx = px0 + 10; bx < px0 + len; bx += 34) px(ctx, bx, py0 - 2, 4, 9, '#4a4656');
-  }
-
-  // rain puddles on the tar paper
-  for (let i = 0; i < Math.max(1, Math.floor(w / 240)); i++) {
-    const px0 = rng.int(30, w - 80), py0 = rng.int(40, d - 50);
-    ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(px0, py0, rng.int(18, 34), rng.int(7, 13), 0, 0, Math.PI * 2);
-    ctx.clip();
-    const pg = ctx.createLinearGradient(px0, py0 - 14, px0, py0 + 14);
-    pg.addColorStop(0, '#3d4a63');
-    pg.addColorStop(0.5, '#232b3c');
-    pg.addColorStop(1, '#161b26');
-    ctx.fillStyle = pg;
-    ctx.fillRect(px0 - 40, py0 - 20, 80, 40);
-    px(ctx, px0 - 14, py0 - 6, 10, 1, 'rgba(255,205,140,0.22)');
-    ctx.restore();
-    ctx.strokeStyle = 'rgba(90,95,120,0.5)';
-    ctx.beginPath();
-    ctx.ellipse(px0, py0, 24, 10, 0, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  if (opts.shed) {
-    const sw = 50, sh = 34;
-    const sx = opts.shed.x ?? Math.round(w * 0.14);
-    const sy = opts.shed.y ?? Math.round(d * 0.4);
-    ctx.fillStyle = rgba('#0b0a10', 0.38);
-    ctx.fillRect(sx + 5, sy + 6, sw, sh);
-    px(ctx, sx, sy, sw, sh, '#3b3642');
-    px(ctx, sx, sy, sw, 4, '#4c4754');
-    px(ctx, sx + 3, sy + 6, sw - 6, sh - 9, '#33303b');
-    px(ctx, sx + 9, sy + 14, 20, sh - 17, '#272430');
-    px(ctx, sx + 33, sy + 14, 8, sh - 17, '#272430');
-    px(ctx, sx + 3, sy + sh - 3, sw - 6, 3, '#1c1a23');
-  }
-
-  if (opts.sign) {
-    const label = opts.sign.text;
-    const sc = opts.sign.scale || 2;
-    const tw = textWidth(label, sc);
-    const sx = Math.round((w - tw) / 2);
-    const sy = 14;
-    px(ctx, sx - 8, sy - 6, tw + 16, 7 * sc + 12, '#17131b');
-    px(ctx, sx - 7, sy - 5, tw + 14, 7 * sc + 10, '#231c24');
-    px(ctx, sx - 7, sy - 5, tw + 14, 1, '#4a3f48');
-    drawText(ctx, label, sx, sy, opts.sign.color || C.neonPink, sc);
-    const g = ctx.createRadialGradient(sx + tw / 2, sy + 5, 0, sx + tw / 2, sy + 5, tw * 0.8);
-    g.addColorStop(0, rgba(opts.sign.color || C.neonPink, 0.2));
-    g.addColorStop(1, rgba(opts.sign.color || C.neonPink, 0));
-    ctx.fillStyle = g;
-    ctx.fillRect(sx - tw, sy - 40, tw * 3, 100);
-  }
-
-  ctx.globalCompositeOperation = 'source-atop';
-  const g = ctx.createLinearGradient(0, 0, 0, d);
-  g.addColorStop(0, rgba('#0c0a12', 0.22));
-  g.addColorStop(0.25, rgba('#0c0a12', 0.02));
-  g.addColorStop(1, rgba('#0c0a12', 0.2));
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, w, d);
-  // cool moonlight rim along the top edge of the tar paper
-  const rim = ctx.createLinearGradient(0, 14, 0, 44);
-  rim.addColorStop(0, 'rgba(150,160,205,0.14)');
-  rim.addColorStop(1, 'rgba(150,160,205,0)');
-  ctx.fillStyle = rim;
-  ctx.fillRect(0, 14, w, 30);
-  ctx.globalCompositeOperation = 'source-over';
-
-  return { canvas: c, width: w, height: d };
-}

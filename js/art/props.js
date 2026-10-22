@@ -414,6 +414,75 @@ export function stallSprite(seed = 1) {
   return { canvas: c, w, h, ax: w / 2, ay: h - 3 };
 }
 
+export function fountainSprite(seed = 1) {
+  // stone basin, water, pedestal and statue, drawn so the player can walk behind it
+  const w = 96, h = 84;
+  const c = createCanvas(w, h);
+  const ctx = ctx2d(c);
+  const rng = makeRng(seed);
+  const cx = w / 2, cy = h - 34;
+  // shadow
+  const sg = ctx.createRadialGradient(cx + 4, cy + 10, 2, cx + 4, cy + 10, 44);
+  sg.addColorStop(0, rgba('#050409', 0.45));
+  sg.addColorStop(1, rgba('#050409', 0));
+  ctx.fillStyle = sg;
+  ctx.fillRect(0, cy - 20, w, 46);
+  // basin
+  const r = 32, ry = 22;
+  ctx.fillStyle = '#3f3b4b';
+  ctx.beginPath(); ctx.ellipse(cx, cy, r + 5, ry + 4, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#736d81';
+  ctx.beginPath(); ctx.ellipse(cx, cy - 1, r + 3, ry + 2, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#8b8598';
+  ctx.beginPath(); ctx.ellipse(cx, cy - 2, r + 1, ry, 0, 0, Math.PI * 2); ctx.fill();
+  // water
+  const wg = ctx.createLinearGradient(0, cy - ry, 0, cy + ry);
+  wg.addColorStop(0, '#5f7f92');
+  wg.addColorStop(0.55, '#3d5b6d');
+  wg.addColorStop(1, '#26343f');
+  ctx.fillStyle = wg;
+  ctx.beginPath(); ctx.ellipse(cx, cy - 1, r - 2, ry - 2, 0, 0, Math.PI * 2); ctx.fill();
+  for (let i = 0; i < 26; i++) {
+    const a = rng() * Math.PI * 2, rr = rng() * (r - 5);
+    px(ctx, cx + Math.cos(a) * rr, cy - 1 + Math.sin(a) * rr * 0.68, rng.int(2, 6), 1, rgba('#a9d2e8', rng.range(0.2, 0.45)));
+  }
+  px(ctx, cx - 14, cy - 10, 10, 1, rgba('#ffd6a0', 0.35));
+  // rim highlight
+  ctx.strokeStyle = 'rgba(215,210,230,0.45)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.ellipse(cx, cy - 2, r + 1, ry, 0, 0, Math.PI * 2); ctx.stroke();
+  // pedestal + column
+  px(ctx, cx - 9, cy - 26, 18, 22, '#5c5668');
+  px(ctx, cx - 9, cy - 26, 18, 2, '#847e92');
+  px(ctx, cx - 7, cy - 6, 14, 4, '#4a4656');
+  px(ctx, cx - 6, cy - 24, 12, 18, '#6b6479');
+  px(ctx, cx - 6, cy - 24, 2, 18, '#847e92');
+  // upper bowl
+  px(ctx, cx - 12, cy - 32, 24, 5, '#7e788c');
+  px(ctx, cx - 12, cy - 32, 24, 1, '#a29bb0');
+  px(ctx, cx - 10, cy - 31, 20, 3, '#3d5b6d');
+  // statue
+  px(ctx, cx - 2, cy - 44, 4, 12, '#6b6479');
+  px(ctx, cx - 2, cy - 44, 1, 12, '#8b8598');
+  circle(ctx, cx, cy - 48, 4, '#7e788c');
+  circle(ctx, cx - 1, cy - 49, 2, '#a29bb0');
+  px(ctx, cx - 6, cy - 40, 3, 2, '#7e788c');
+  px(ctx, cx + 3, cy - 41, 3, 3, '#7e788c');
+  // water streams falling from the top bowl
+  for (const dx of [-7, -2, 3, 8]) {
+    for (let yy = cy - 28; yy < cy - 8; yy++) {
+      if (rng.chance(0.75)) px(ctx, cx + dx, yy, 1, 1, rgba('#b6dcef', 0.35));
+    }
+  }
+  // faint glow from the wet stone
+  const gl = ctx.createRadialGradient(cx, cy - 14, 2, cx, cy - 14, 44);
+  gl.addColorStop(0, rgba('#a8d6ea', 0.16));
+  gl.addColorStop(1, rgba('#a8d6ea', 0));
+  ctx.fillStyle = gl;
+  ctx.fillRect(cx - 46, cy - 60, 92, 92);
+  return { canvas: c, w, h, ax: cx, ay: cy + 24 };
+}
+
 export const PROP_MAKERS = {
   tree: treeSprite,
   lamp: lampSprite,
@@ -429,6 +498,7 @@ export const PROP_MAKERS = {
   planter: planterSprite,
   bollard: bollardSprite,
   stall: stallSprite,
+  fountain: fountainSprite,
 };
 
 const cache = new Map();
