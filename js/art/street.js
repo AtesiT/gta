@@ -580,56 +580,57 @@ export function buildStreet() {
   puddle(ctx, 690, WORLD.laneS + 60, 34, 8, rng);
 
   // ============================================================ south rooftops
+  // Everything below the south sidewalk is a roof seen from above. Only the first
+  // ~110 px of a roof are ever on screen (the camera stops at the backs of the
+  // buildings), so the props live in that band: bulkheads, water towers, skylights,
+  // vents and AC units all cluster along the parapet, the way they do in real life.
   const roofs = [
     {
-      x: 0, w: 600, seed: 91, style: 'tar',
-      waterTower: { x: 430, y: 176, scale: 1.15 },
-      bulkhead: { x: 58, y: 74, w: 84, h: 58, palette: { wall: '#4a3a35', wallDark: '#33272a', cap: '#575063' } },
-      chimneys: [{ x: 196, y: 196 }, { x: 552, y: 92 }],
-      skylights: [{ x: 300, y: 66, w: 36, h: 22 }, { x: 250, y: 240, w: 30, h: 18, lit: false }],
-      acUnits: [{ x: 120, y: 210 }, { x: 344, y: 196 }],
-      vents: [{ x: 176, y: 132 }, { x: 508, y: 250 }],
-      antenna: { x: 520, y: 214 },
-      garden: { x: 300, y: 258, w: 128, h: 46 },
-      pigeons: { x: 236, y: 96 },
+      x: 0, w: 600, seed: 91, style: 'tar', tint: '#7a5a3c', wallColor: '#4a3a33',
+      sign: { text: 'BODEGA', color: C.neonTeal, scale: 2, x: 300 },
+      waterTower: { x: 452, y: 150, scale: 1.15 },
+      bulkhead: { x: 48, y: 80, w: 82, h: 46, palette: { wall: '#4a3a35', wallDark: '#33272a', cap: '#575063' } },
+      chimneys: [{ x: 196, y: 130 }, { x: 524, y: 96 }],
+      skylights: [{ x: 300, y: 56, w: 36, h: 22 }, { x: 152, y: 60, w: 26, h: 16, lit: false }],
+      acUnits: [{ x: 120, y: 126 }, { x: 352, y: 132 }],
+      vents: [{ x: 176, y: 96 }, { x: 508, y: 116 }],
+      pigeons: { x: 236, y: 92 },
       cables: true,
     },
     {
-      x: 600, w: 600, seed: 92, style: 'ballast',
+      x: 600, w: 600, seed: 92, style: 'ballast', tint: '#5a4a6a', wallColor: '#443c46',
       sign: { text: 'MOTEL', color: C.neonPink, scale: 2 },
-      bulkhead: { x: 96, y: 92, w: 78, h: 54, palette: { wall: '#4a4148', wallDark: '#332f36', cap: '#4a4656' } },
-      waterTower: { x: 478, y: 214, scale: 0.9 },
-      chimneys: [{ x: 260, y: 226 }],
-      skylights: [{ x: 400, y: 96, w: 34, h: 20 }, { x: 160, y: 236, w: 30, h: 18, lit: false }],
-      acUnits: [{ x: 340, y: 168 }, { x: 540, y: 120 }],
-      vents: [{ x: 40, y: 210 }, { x: 490, y: 260 }],
-      pigeons: { x: 230, y: 150 },
+      bulkhead: { x: 86, y: 82, w: 76, h: 44, palette: { wall: '#4a4148', wallDark: '#332f36', cap: '#4a4656' } },
+      waterTower: { x: 474, y: 148, scale: 0.95 },
+      chimneys: [{ x: 258, y: 128 }, { x: 556, y: 88 }],
+      skylights: [{ x: 392, y: 54, w: 34, h: 20 }, { x: 160, y: 58, w: 28, h: 16, lit: false }],
+      acUnits: [{ x: 340, y: 120 }, { x: 528, y: 132 }],
+      vents: [{ x: 36, y: 108 }, { x: 470, y: 96 }],
       cables: true,
     },
     {
-      x: 1200, w: 600, seed: 93, style: 'slate',
+      x: 1200, w: 600, seed: 93, style: 'slate', tint: '#3c5a6a', wallColor: '#3f3a44',
       sign: { text: 'DINER', color: C.neonAmber, scale: 2 },
-      waterTower: { x: 92, y: 158, scale: 1.05 },
-      bulkhead: { x: 352, y: 84, w: 92, h: 60, palette: { wall: '#3d4450', wallDark: '#2b3038', cap: '#414a58' } },
-      chimneys: [{ x: 248, y: 210 }, { x: 550, y: 132 }],
-      skylights: [{ x: 180, y: 88, w: 40, h: 24 }, { x: 452, y: 214, w: 30, h: 18 }],
-      acUnits: [{ x: 300, y: 176 }, { x: 520, y: 250 }],
-      vents: [{ x: 160, y: 258 }],
-      garden: { x: 258, y: 272, w: 120, h: 38 },
-      antenna: { x: 40, y: 262 },
+      waterTower: { x: 92, y: 150, scale: 1.05 },
+      bulkhead: { x: 344, y: 76, w: 90, h: 50, palette: { wall: '#3d4450', wallDark: '#2b3038', cap: '#414a58' } },
+      chimneys: [{ x: 244, y: 130 }, { x: 552, y: 92 }],
+      skylights: [{ x: 178, y: 54, w: 40, h: 24 }, { x: 452, y: 60, w: 26, h: 16 }],
+      acUnits: [{ x: 300, y: 128 }, { x: 512, y: 130 }],
+      vents: [{ x: 158, y: 100 }, { x: 404, y: 104 }],
+      garden: { x: 262, y: 108, w: 110, h: 36 },
+      antenna: { x: 40, y: 122 },
       cables: true,
     },
     {
-      x: 1800, w: 600, seed: 94, style: 'shingle',
+      x: 1800, w: 600, seed: 94, style: 'shingle', tint: '#6a5a44', wallColor: '#4a4038',
       sign: { text: 'HOTEL', color: C.neonTeal, scale: 2 },
-      bulkhead: { x: 470, y: 92, w: 80, h: 56, palette: { wall: '#46403a', wallDark: '#302b26', cap: '#4c463f' } },
-      waterTower: { x: 84, y: 226, scale: 0.95 },
-      chimneys: [{ x: 250, y: 186 }, { x: 548, y: 232 }],
-      skylights: [{ x: 340, y: 84, w: 36, h: 22 }, { x: 196, y: 262, w: 28, h: 18, lit: false }],
-      acUnits: [{ x: 300, y: 176 }, { x: 500, y: 170 }],
-      vents: [{ x: 130, y: 112 }],
-      antenna: { x: 400, y: 246 },
-      pigeons: { x: 258, y: 118 },
+      bulkhead: { x: 462, y: 80, w: 78, h: 46, palette: { wall: '#46403a', wallDark: '#302b26', cap: '#4c463f' } },
+      waterTower: { x: 88, y: 148, scale: 0.95 },
+      chimneys: [{ x: 248, y: 126 }, { x: 548, y: 132 }],
+      skylights: [{ x: 336, y: 54, w: 36, h: 22 }, { x: 192, y: 58, w: 28, h: 18, lit: false }],
+      acUnits: [{ x: 296, y: 122 }, { x: 500, y: 120 }],
+      vents: [{ x: 128, y: 98 }, { x: 404, y: 108 }],
+      pigeons: { x: 258, y: 90 },
       cables: true,
     },
   ];
@@ -644,19 +645,19 @@ export function buildStreet() {
   const roofLights = [];
   for (const r of roofs) {
     const roof = makeRoof({ width: r.w, depth: WORLD.roofDepth, seed: r.seed, ...r });
-    // service bulbs along the parapet + neon sign glow
+    // service bulbs along the parapet + the rooftop neon's own glow
     for (let x = 66; x < r.w - 30; x += 150) {
-      roofLights.push({ x: r.x + x + 1, y: WORLD.sidewalkS + 22, r: 58, color: '#ffcb84', glow: 0.95, flicker: rng() * 8 });
+      roofLights.push({ x: r.x + x + 1, y: WORLD.sidewalkS + 13, r: 54, color: '#ffcb84', glow: 0.9, flicker: rng() * 8 });
     }
     if (r.sign) {
-      roofLights.push({ x: r.x + (r.sign.x ?? r.w / 2), y: WORLD.sidewalkS + 18, r: 130, color: r.sign.color, glow: 0.75, strength: 0.55, flicker: 2 });
+      roofLights.push({ x: r.x + (r.sign.x ?? r.w / 2), y: WORLD.sidewalkS + 46, r: 132, color: r.sign.color, glow: 0.8, strength: 0.6, flicker: 2 });
     }
     ctx.drawImage(roof.canvas, r.x, WORLD.sidewalkS);
     // party wall between neighbouring roofs
     px(ctx, r.x - 4, WORLD.sidewalkS, 8, WORLD.roofDepth, '#16131b');
     px(ctx, r.x - 4, WORLD.sidewalkS, 2, WORLD.roofDepth, '#2e2934');
     px(ctx, r.x - 4, WORLD.sidewalkS, 8, 6, '#3a3542');
-    if (r.sign) signs.push({ x: r.x + (r.sign.x ?? r.w / 2), y: WORLD.sidewalkS + 22, text: r.sign.text, color: r.sign.color });
+    if (r.sign) signs.push({ x: r.x + (r.sign.x ?? r.w / 2), y: WORLD.sidewalkS + 40, text: r.sign.text, color: r.sign.color });
   }
   // street-facing shadow of the south parapet
   const sg = ctx.createLinearGradient(0, WORLD.sidewalkS, 0, WORLD.sidewalkS + 22);

@@ -175,64 +175,79 @@ function backTorso(ctx, p, armL, armR) {
   px(ctx, 10, TORSO_B, 10, 1, p.pantsDark);
 }
 
-// Side view, facing right. Uses the same vertical layout.
+// Side view, facing right. Narrower silhouette than the front view: the body is
+// about 8px wide, the head has a proper skull + nose profile and the hair is a
+// cap with a fringe instead of a triangular blob.
 function sideFigure(ctx, p, swing, blink) {
-  // legs (back one first)
-  const backOff = swing < 0 ? -swing : 0;
-  const fwdOff = swing > 0 ? swing : 0;
+  const hy = HEAD_TOP; // 3
+  // ---- legs (back leg first)
   const backLift = swing < 0 ? -swing : 0;
   const frontLift = swing > 0 ? swing : 0;
   const backBottom = 33 - backLift;
   const frontBottom = 33 - frontLift;
-  shaft(ctx, 12 - backOff, LEG_Y, 3, backBottom - LEG_Y, p.pantsDark, '#1a1e28');
-  px(ctx, 11 - backOff, backBottom, 5, 3, shade(p.shoe, -18));
-  shaft(ctx, 15 + fwdOff, LEG_Y, 4, frontBottom - LEG_Y, p.pants, p.pantsDark);
-  px(ctx, 14 + fwdOff, frontBottom, 7, 3, p.shoe);
-  px(ctx, 14 + fwdOff, frontBottom, 7, 1, shade(p.shoe, 28));
-  px(ctx, 14 + fwdOff, frontBottom + 2, 7, 1, '#15111a');
-  // torso
+  shaft(ctx, 12, LEG_Y, 3, backBottom - LEG_Y, p.pantsDark, '#1a1e28');
+  px(ctx, 11, backBottom, 6, 3, shade(p.shoe, -20));
+  shaft(ctx, 15, LEG_Y, 4, frontBottom - LEG_Y, p.pants, p.pantsDark);
+  px(ctx, 15, frontBottom, 6, 3, p.shoe);
+  px(ctx, 15, frontBottom, 6, 1, shade(p.shoe, 26));
+  px(ctx, 15, frontBottom + 2, 6, 1, '#15111a');
+
+  // ---- torso (narrow, chest to the right)
   px(ctx, 13, NECK_Y, 3, 2, p.skinDark);
-  px(ctx, 10, TORSO_Y, 10, TORSO_B - TORSO_Y, p.shirt);
-  px(ctx, 10, TORSO_Y, 10, 2, shade(p.shirt, 14));
-  px(ctx, 10, TORSO_Y, 2, TORSO_B - TORSO_Y, p.shirtDark);
-  px(ctx, 10, TORSO_B - 1, 10, 1, shade(p.shirt, -34));
-  px(ctx, 10, TORSO_B, 10, 2, p.pants);
-  px(ctx, 10, TORSO_B, 10, 1, p.pantsDark);
-  // near arm swinging
-  const armSwing = Math.round(-swing * 0.8);
-  shaft(ctx, 13, TORSO_Y + 1 + armSwing, 4, 6, p.shirt, p.shirtDark);
-  px(ctx, 13, TORSO_Y + 7 + armSwing, 3, 3, p.skin);
-  px(ctx, 13, TORSO_Y + 9 + armSwing, 3, 1, p.skinDark);
-  // head
-  px(ctx, 13, HEAD_TOP, 8, 3, p.hair);
-  px(ctx, 12, HEAD_TOP + 2, 10, 10, p.skin);
-  px(ctx, 12, HEAD_TOP + 2, 10, 1, shade(p.skin, 12));
-  px(ctx, 12, HEAD_TOP + 11, 10, 1, p.skinDark);
-  // hair: back of the head, top and fringe
-  px(ctx, 11, HEAD_TOP + 1, 11, 3, p.hair);
-  px(ctx, 10, HEAD_TOP + 2, 3, 10, p.hair);
-  px(ctx, 10, HEAD_TOP + 2, 1, 10, p.hairDark);
-  px(ctx, 11, HEAD_TOP + 1, 4, 1, shade(p.hair, 20));
-  px(ctx, 14, HEAD_TOP + 3, 7, 2, p.hair);
-  px(ctx, 14, HEAD_TOP + 3, 4, 3, p.hair);
+  px(ctx, 12, TORSO_Y, 8, TORSO_B - TORSO_Y, p.shirt);
+  px(ctx, 12, TORSO_Y, 8, 2, shade(p.shirt, 14));
+  px(ctx, 12, TORSO_Y, 2, TORSO_B - TORSO_Y, p.shirtDark);
+  px(ctx, 18, TORSO_Y + 1, 2, TORSO_B - TORSO_Y - 2, shade(p.shirt, -6));
+  px(ctx, 12, TORSO_B - 1, 8, 1, shade(p.shirt, -34));
+  px(ctx, 12, TORSO_B, 8, 2, p.pants);
+  px(ctx, 12, TORSO_B, 8, 1, p.pantsDark);
+
+  // ---- near arm swinging past the torso
+  const armSwing = Math.round(swing * 0.7);
+  shaft(ctx, 15, TORSO_Y + 1 + armSwing, 3, 6, shade(p.shirt, 6), p.shirtDark);
+  px(ctx, 15, TORSO_Y + 7 + armSwing, 3, 3, p.skin);
+  px(ctx, 15, TORSO_Y + 9 + armSwing, 3, 1, p.skinDark);
+
+  // ---- head in profile, facing right: simple, clean shapes
+  // hair cap
+  px(ctx, 14, hy + 0, 6, 1, p.hair);
+  px(ctx, 13, hy + 1, 8, 1, p.hair);
+  px(ctx, 12, hy + 2, 9, 1, p.hair);
+  px(ctx, 14, hy + 0, 4, 1, shade(p.hair, 20));
+  // face block
+  px(ctx, 14, hy + 3, 7, 6, p.skin);
+  px(ctx, 15, hy + 9, 5, 1, p.skin);
+  px(ctx, 15, hy + 10, 5, 1, shade(p.skin, -12));
+  px(ctx, 14, hy + 3, 7, 1, shade(p.skin, 10));
+  px(ctx, 14, hy + 3, 1, 6, shade(p.skin, -14));
+  // fringe + brow
+  px(ctx, 15, hy + 3, 2, 1, p.hair);
+  px(ctx, 17, hy + 4, 2, 1, p.hairDark);
+  // eye
+  if (blink) {
+    px(ctx, 18, hy + 5, 2, 1, '#3d2d33');
+  } else {
+    px(ctx, 18, hy + 5, 2, 2, '#33252b');
+  }
+  // nose + cheek
+  px(ctx, 21, hy + 5, 1, 2, p.skin);
+  px(ctx, 21, hy + 6, 1, 1, shade(p.skin, -18));
+  px(ctx, 15, hy + 7, 1, 1, rgba('#c8735f', 0.35));
+  // mouth
+  px(ctx, 18, hy + 7, 2, 1, shade(p.skin, -30));
+  // hair at the back of the head + sideburn
+  px(ctx, 11, hy + 3, 3, 7, p.hair);
+  px(ctx, 11, hy + 3, 1, 7, p.hairDark);
+  px(ctx, 13, hy + 3, 1, 3, shade(p.hair, -6));
   if (p.long) {
-    px(ctx, 8, HEAD_TOP + 5, 3, 11, p.hair);
-    px(ctx, 8, HEAD_TOP + 5, 1, 11, p.hairDark);
-    px(ctx, 7, HEAD_TOP + 9, 2, 7, p.hairDark);
+    px(ctx, 11, hy + 10, 2, 6, p.hair);
+    px(ctx, 10, hy + 11, 1, 6, p.hairDark);
+    px(ctx, 12, hy + 10, 1, 6, shade(p.hair, 10));
   }
-  // face: eye, brow, nose, mouth, blush
-  px(ctx, 12, HEAD_TOP + 6, 2, 1, p.hairDark);
-  if (blink) px(ctx, 15, HEAD_TOP + 8, 2, 1, '#40302f');
-  else {
-    px(ctx, 15, HEAD_TOP + 7, 2, 2, '#3e2f33');
-    px(ctx, 15, HEAD_TOP + 7, 1, 1, '#f8f0e4');
-  }
-  px(ctx, 21, HEAD_TOP + 8, 1, 2, p.skinDark);
-  px(ctx, 20, HEAD_TOP + 8, 1, 2, p.skin);
-  px(ctx, 16, HEAD_TOP + 10, 3, 1, shade(p.skin, -26));
-  px(ctx, 13, HEAD_TOP + 9, 1, 1, rgba('#c8735f', 0.45));
-  // ear
-  px(ctx, 13, HEAD_TOP + 8, 1, 2, p.skinDark);
+  // neck: fill the gap between chin and collar so no outline wedge appears
+  px(ctx, 15, hy + 11, 4, 3, p.skinDark);
+  px(ctx, 14, hy + 10, 1, 1, shade(p.skin, -20));
+  px(ctx, 15, hy + 11, 1, 3, shade(p.skin, -26));
 }
 
 function cellFor(dir, frame, p) {

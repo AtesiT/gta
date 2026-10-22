@@ -54,11 +54,11 @@ function surface(ctx, w, d, style, rng) {
 
   if (style === 'shingle' || style === 'slate') {
     // fine, low-contrast shingles so the surface reads as a roof, not a brick wall
-    const th = style === 'shingle' ? 6 : 7;
-    const tw = style === 'shingle' ? 9 : 11;
+    const th = style === 'shingle' ? 6 : 6;
+    const tw = style === 'shingle' ? 20 : 22;
     const tones = style === 'shingle'
-      ? ['#3d3b38', '#3a3835', '#403e3a', '#373532', '#3b3936']
-      : ['#383644', '#353341', '#3b3948', '#33313e', '#373545'];
+      ? ['#3a3835', '#3c3a37', '#393734', '#3b3936', '#3d3b38']
+      : ['#353341', '#373543', '#363442', '#343240', '#383646'];
     for (let y = 0, row = 0; y < d; y += th, row++) {
       const off = row % 2 ? -Math.floor(tw / 2) : 0;
       for (let x = off; x < w; x += tw) {
@@ -66,10 +66,12 @@ function surface(ctx, w, d, style, rng) {
         const x0 = Math.max(x, 0), x1 = Math.min(x + tw - 1, w);
         if (x1 <= x0) continue;
         px(ctx, x0, y, x1 - x0, th - 1, col);
-        px(ctx, x0, y, x1 - x0, 1, shade(col, 6));
-        if (rng.chance(0.05)) px(ctx, x0, y, x1 - x0, th - 1, shade(col, -9));
+        px(ctx, x0, y, x1 - x0, 1, shade(col, 4));
+        // butt joint between shingles, very low contrast
+        px(ctx, x1, y + 1, 1, th - 2, 'rgba(18,16,24,0.22)');
+        if (rng.chance(0.03)) px(ctx, x0, y, x1 - x0, th - 1, shade(col, -6));
       }
-      px(ctx, 0, y + th - 1, w, 1, 'rgba(20,18,26,0.28)');
+      px(ctx, 0, y + th - 1, w, 1, 'rgba(16,14,22,0.32)');
     }
     // broad diagonal weathering, so it doesn't tile too obviously
     for (let i = 0; i < (w * d) / 7000; i++) {
@@ -137,153 +139,130 @@ function surface(ctx, w, d, style, rng) {
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, d);
 
-  // rain puddles with a hint of reflected neon
-  for (let i = 0; i < Math.max(1, Math.round(w / 230)); i++) {
-    const x0 = rng.int(30, Math.max(34, w - 80));
-    const y0 = rng.int(56, Math.max(60, d - 40));
-    const rx = rng.int(16, 30), ry = rng.int(6, 11);
+  // rain water: shallow, low-contrast sheets with a dull sky reflection
+  for (let i = 0; i < Math.max(1, Math.round(w / 330)); i++) {
+    const x0 = rng.int(40, Math.max(44, w - 90));
+    const y0 = rng.int(70, Math.max(74, d - 46));
+    const rx = rng.int(18, 34), ry = rng.int(7, 12);
     ctx.save();
     ctx.beginPath();
     ctx.ellipse(x0, y0, rx, ry, 0, 0, Math.PI * 2);
     ctx.clip();
     const pg = ctx.createLinearGradient(0, y0 - ry, 0, y0 + ry);
-    pg.addColorStop(0, '#3b465c');
-    pg.addColorStop(0.45, '#242c3a');
-    pg.addColorStop(1, '#161a22');
+    pg.addColorStop(0, '#374152');
+    pg.addColorStop(0.5, '#28303d');
+    pg.addColorStop(1, '#1d232c');
     ctx.fillStyle = pg;
+    ctx.globalAlpha = 0.85;
     ctx.fillRect(x0 - rx, y0 - ry, rx * 2, ry * 2);
-    px(ctx, x0 - Math.round(rx * 0.5), y0 - 3, Math.round(rx * 0.4), 1, 'rgba(255,206,142,0.35)');
-    px(ctx, x0 + Math.round(rx * 0.15), y0 + 2, Math.round(rx * 0.3), 1, 'rgba(140,210,255,0.18)');
-    px(ctx, x0 - rx + 2, y0 - ry + 2, rx, 1, 'rgba(180,195,225,0.14)');
+    ctx.globalAlpha = 1;
     ctx.restore();
-    ctx.save();
-    ctx.strokeStyle = 'rgba(120,126,150,0.35)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.ellipse(x0, y0, rx - 0.5, ry - 0.5, 0, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
+    // a couple of lamp glints, no hard outline
+    px(ctx, x0 - Math.round(rx * 0.55), y0 - 2, Math.round(rx * 0.35), 1, 'rgba(255,206,142,0.20)');
+    px(ctx, x0 + Math.round(rx * 0.1), y0 + 3, Math.round(rx * 0.3), 1, 'rgba(120,170,210,0.13)');
+    for (let k = 0; k < 4; k++) {
+      px(ctx, x0 + rng.int(-rx, rx - 4), y0 + rng.int(-ry, ry - 1), rng.int(3, 8), 1, 'rgba(150,164,190,0.06)');
+    }
+  }
+
+  // patched sections: repairs in different tar / asphalt tones break up the tiling
+  for (let i = 0; i < Math.max(1, Math.round(w / 260)); i++) {
+    const pw = rng.int(34, 86), ph = rng.int(20, 44);
+    const px0 = rng.int(10, Math.max(12, w - pw - 10));
+    const py0 = rng.int(50, Math.max(54, d - ph - 20));
+    const tone = rng.chance(0.5) ? shade(STYLES[style].base, 5) : shade(STYLES[style].base, -5);
+    ctx.globalAlpha = 0.55;
+    px(ctx, px0, py0, pw, ph, tone);
+    ctx.globalAlpha = 1;
+    px(ctx, px0, py0, pw, 1, 'rgba(10,8,14,0.22)');
+    px(ctx, px0, py0 + ph - 1, pw, 1, 'rgba(90,86,110,0.08)');
+    for (let k = 0; k < pw * ph / 40; k++) px(ctx, px0 + rng.int(1, pw - 2), py0 + rng.int(1, ph - 2), 1, 1, 'rgba(12,10,18,0.25)');
   }
 }
 
 // -------------------------------------------------------- parapets / gutters
-// The street-facing wall of a south-block house, seen from above-ish: coping at the
-// very top, wall with windows below it, and the roof plane continuing behind.
+// The street-facing edge of a south-block house, seen from a high, tilted camera.
+// You are looking down at the top of the building, so the only bit of wall you see
+// is a thin coping: bright stone top face, a sliver of brick in shade, then the
+// gutter and the roof plane falling away to the back. No tall elevation here —
+// that is exactly what used to make the block read as "the end of a house".
 function frontWall(ctx, w, wallH, rng, opts = {}) {
   const wall = opts.wall || '#4a3a36';
   const trim = opts.trim || '#6e6a7d';
-  const copingH = 7;
+  const copingH = 9;
+  const inner = Math.max(3, wallH - copingH - 2);
 
-  // ---- wall body
-  px(ctx, 0, 0, w, wallH, wall);
-  // brick / clapboard texture
-  const brickColors = [wall, shade(wall, 7), shade(wall, -8), shade(wall, 12), shade(wall, -14)];
-  for (let by = copingH; by < wallH; by += 5) {
-    const off = Math.floor(by / 5) % 2 ? 0 : -6;
+  // ---- brick sliver in shade (the outer face is turned away from us)
+  px(ctx, 0, copingH, w, wallH - copingH, shade(wall, -16));
+  const brickColors = [shade(wall, -12), shade(wall, -20), shade(wall, -7), shade(wall, -26)];
+  for (let by = copingH + 2; by < wallH; by += 4) {
+    const off = Math.floor(by / 4) % 2 ? 0 : -6;
     for (let bx = off; bx < w; bx += 12) {
       const x0 = Math.max(bx, 0), x1 = Math.min(bx + 11, w);
       if (x1 <= x0) continue;
-      px(ctx, x0, by, x1 - x0, 4, rng.pick(brickColors));
+      px(ctx, x0, by, x1 - x0, 3, rng.pick(brickColors));
     }
   }
-  // grime streaks
-  for (let i = 0; i < w / 26; i++) {
+  // soot streaks running down from the coping
+  for (let i = 0; i < w / 18; i++) {
     const gx = rng.int(0, w - 1);
-    const gy = rng.int(copingH, wallH - 10);
-    for (let yy = gy; yy < Math.min(wallH, gy + rng.int(10, 40)); yy++) {
-      if (rng.chance(0.5)) px(ctx, gx, yy, 1, 1, 'rgba(16,9,12,0.16)');
+    for (let yy = copingH + 1; yy < wallH - 1; yy++) {
+      if (rng.chance(0.55)) px(ctx, gx, yy, 1, 1, 'rgba(12,8,12,0.22)');
     }
   }
 
-  // ---- windows: one or two rows depending on the wall height
-  const rows = wallH >= 100 ? 2 : 1;
-  const cols = Math.max(2, Math.floor(w / 110));
-  const spacing = w / cols;
-  for (let r = 0; r < rows; r++) {
-    const wy = copingH + 14 + r * Math.round((wallH - copingH - 30) / rows);
-    const winH = rows === 2 ? 28 : 32;
-    if (wy + winH > wallH - 10) continue;
-    for (let c2 = 0; c2 < cols; c2++) {
-      const cx = Math.round(spacing * (c2 + 0.5));
-      const winW = 26;
-      const x0 = cx - Math.round(winW / 2);
-      const lit = rng.chance(0.5);
-      // lintel + reveal
-      px(ctx, x0 - 3, wy - 4, winW + 6, 4, trim);
-      px(ctx, x0 - 3, wy - 4, winW + 6, 1, shade(trim, 16));
-      px(ctx, x0 - 3, wy + winH, winW + 6, 4, shade(trim, 4));
-      px(ctx, x0 - 3, wy + winH + 4, winW + 6, 2, 'rgba(10,8,14,0.5)');
-      // glass
-      px(ctx, x0, wy, winW, winH, '#231f2a');
-      const g = ctx.createLinearGradient(0, wy, 0, wy + winH);
-      if (lit) {
-        g.addColorStop(0, '#ffd79b');
-        g.addColorStop(0.55, '#f2b978');
-        g.addColorStop(1, '#cf8f52');
-      } else {
-        g.addColorStop(0, '#2d3a52');
-        g.addColorStop(0.6, '#1b2436');
-        g.addColorStop(1, '#131a28');
-      }
-      ctx.fillStyle = g;
-      ctx.fillRect(x0 + 2, wy + 2, winW - 4, winH - 4);
-      // curtains / silhouettes
-      if (lit) {
-        if (rng.chance(0.5)) px(ctx, x0 + 2, wy + 2, rng.int(3, 6), winH - 4, 'rgba(150,92,48,0.45)');
-        if (rng.chance(0.35)) {
-          const sx = x0 + rng.int(5, Math.max(6, winW - 10));
-          px(ctx, sx, wy + winH - 14, 5, 9, 'rgba(90,58,38,0.5)');
-          px(ctx, sx + 1, wy + winH - 17, 3, 3, 'rgba(90,58,38,0.5)');
-        }
-      } else if (rng.chance(0.5)) {
-        ctx.fillStyle = 'rgba(140,160,195,0.13)';
-        ctx.beginPath();
-        ctx.moveTo(x0 + 2, wy + winH - 2);
-        ctx.lineTo(x0 + 12, wy + 2);
-        ctx.lineTo(x0 + 19, wy + 2);
-        ctx.lineTo(x0 + 8, wy + winH - 2);
-        ctx.closePath();
-        ctx.fill();
-      }
-      // mullions + shine
-      px(ctx, x0 + Math.round(winW / 2), wy + 2, 1, winH - 4, '#241f2b');
-      px(ctx, x0 + 2, wy + Math.round(winH / 2), winW - 4, 1, '#241f2b');
-      px(ctx, x0 + 3, wy + 3, 1, winH - 8, 'rgba(230,238,255,0.10)');
-      // flower box or AC hanging under the sill
-      if (rng.chance(0.22)) {
-        px(ctx, x0 + 2, wy + winH + 4, winW - 4, 6, '#4a4038');
-        for (let f = 0; f < 4; f++) {
-          px(ctx, x0 + 3 + f * 6, wy + winH + 2, 4, 2, rng.pick(['#3f6d3f', '#54804a', '#8a5a7a']));
-        }
-      } else if (rng.chance(0.14)) {
-        px(ctx, x0 + 4, wy + winH + 4, 18, 9, '#4b4857');
-        px(ctx, x0 + 4, wy + winH + 4, 18, 1, '#656273');
-        for (let b = 0; b < 5; b++) px(ctx, x0 + 5 + b * 3, wy + winH + 6, 1, 6, '#302d3a');
-      }
-    }
+  // ---- coping: the bright top face of the parapet, catching the street light
+  px(ctx, 0, 0, w, copingH, '#6f6a7d');
+  px(ctx, 0, 0, w, 2, '#b3aec1');
+  px(ctx, 0, 1, w, 1, '#9792a8');
+  px(ctx, 0, copingH - 2, w, 2, '#7b7688');
+  px(ctx, 0, copingH - 1, w, 1, '#4e4a5e');
+  for (let x = 0; x < w; x += 34) {
+    px(ctx, x, 0, 1, copingH - 2, 'rgba(48,45,60,0.45)');
+    if (rng.chance(0.22)) px(ctx, x + 2, 2, 7, 3, 'rgba(32,29,40,0.3)');
+  }
+  // nicks, chipped corners and a little moss on the joints
+  for (let i = 0; i < Math.max(2, Math.round(w / 140)); i++) {
+    const nx = rng.int(4, w - 8);
+    px(ctx, nx, rng.int(3, 7), rng.int(2, 5), 1, 'rgba(38,34,46,0.5)');
+    if (rng.chance(0.4)) px(ctx, nx + 2, 3, 2, 1, 'rgba(78,96,66,0.5)');
   }
 
-  // ---- wall lamps + a bit of brick detailing
-  for (let x = 60; x < w - 30; x += 190) {
-    px(ctx, x, copingH + 30, 3, 4, '#3a3040');
-    px(ctx, x + 1, copingH + 33, 2, 2, '#fff1c8');
-    const lg = ctx.createRadialGradient(x + 2, copingH + 34, 0, x + 2, copingH + 34, 26);
-    lg.addColorStop(0, 'rgba(255,206,142,0.30)');
-    lg.addColorStop(1, 'rgba(255,206,142,0)');
-    ctx.fillStyle = lg;
-    ctx.fillRect(x - 24, copingH + 8, 52, 52);
-  }
-
-  // ---- coping / roof edge along the top of the wall
-  px(ctx, 0, 0, w, 3, '#8a8598');
-  px(ctx, 0, 0, w, 1, '#a9a4b8');
-  px(ctx, 0, 3, w, 3, '#5a5568');
-  px(ctx, 0, copingH, w, 2, 'rgba(60,56,72,0.9)');
-  for (let x = 0; x < w; x += 30) px(ctx, x, 0, 1, copingH, 'rgba(50,46,60,0.55)');
-  // the roof plane starts here
-  px(ctx, 0, wallH, w, 2, 'rgba(10,8,14,0.55)');
-
+  // ---- the inner lip: a hard dark line where the parapet meets the roof
+  if (inner > 0) px(ctx, 0, wallH - 1, w, 1, 'rgba(8,6,12,0.7)');
   return wallH;
+}
+
+// The gutter runnel behind the parapet. Standing water, leaves, scuppers and the
+// hard shadow the coping throws onto the roof — this is what sells "we are above
+// the building looking down".
+function roofEdge(ctx, w, wallH, rng) {
+  const gutterH = 8;
+  px(ctx, 0, wallH, w, 2, 'rgba(8,6,13,0.62)');
+  px(ctx, 0, wallH + 2, w, gutterH, '#1b1922');
+  px(ctx, 0, wallH + 2, w, 1, '#100e16');
+  px(ctx, 0, wallH + 2 + gutterH, w, 1, '#4a4557');
+  // water: dull reflected sky and the odd warm glint from the street lamps
+  for (let x = 0; x < w; x += 5) {
+    if (rng.chance(0.5)) px(ctx, x, wallH + 4 + rng.int(0, 3), rng.int(2, 5), 1, 'rgba(52,62,80,0.5)');
+    if (rng.chance(0.05)) px(ctx, x, wallH + 5 + rng.int(0, 2), 3, 1, 'rgba(255,206,142,0.32)');
+  }
+  for (let i = 0; i < w / 30; i++) {
+    px(ctx, rng.int(0, w - 3), wallH + 4 + rng.int(0, 4), 2, 1, rng.pick(['#3d452c', '#4c3a26', '#2a3022']));
+  }
+  // scupper heads interrupting the gutter
+  for (let sx = Math.round(w * 0.2); sx < w - 40; sx += 230) {
+    const x = sx + rng.int(-12, 12);
+    px(ctx, x - 6, wallH, 14, 12, '#2a2634');
+    px(ctx, x - 6, wallH, 14, 1, '#565167');
+    px(ctx, x - 4, wallH + 2, 10, 8, '#131120');
+    px(ctx, x + 7, wallH + 1, 2, 10, 'rgba(126,134,158,0.22)');
+  }
+  const g = ctx.createLinearGradient(0, wallH + gutterH + 2, 0, wallH + gutterH + 26);
+  g.addColorStop(0, 'rgba(6,4,11,0.34)');
+  g.addColorStop(1, 'rgba(6,4,11,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, wallH + gutterH + 2, w, 26);
 }
 
 function sideEdges(ctx, w, d) {
@@ -347,6 +326,12 @@ function waterTower(ctx, x, y, rng, scale = 1) {
   }
   // base rim shadow + top rim
   px(ctx, left, bodyY + bodyH - 3, tw, 3, 'rgba(10,7,8,0.45)');
+  // street light catching the near face of the tank, plus a cool moon rim
+  px(ctx, left + 1, bodyY + 1, tw - 2, 1, 'rgba(255,208,152,0.22)');
+  px(ctx, left + 1, bodyY + 2, tw - 2, 1, 'rgba(255,208,152,0.10)');
+  px(ctx, left + Math.round(tw * 0.32), bodyY + 3, 2, bodyH - 6, 'rgba(255,214,168,0.07)');
+  px(ctx, left, bodyY + 3, 1, bodyH - 6, 'rgba(146,170,205,0.18)');
+  px(ctx, left + tw - 1, bodyY + 3, 1, bodyH - 6, 'rgba(8,6,10,0.5)');
   px(ctx, left - 1, bodyY - 1, tw + 2, 3, '#2b211c');
 
   // conical roof: filled bands, light on the left, dark on the right
@@ -697,8 +682,14 @@ export function makeRoof(opts) {
   const c = createCanvas(w, d);
   const ctx = ctx2d(c);
 
-  const wallH = Math.round(opts.wallH ?? 116);
+  const wallH = Math.round(opts.wallH ?? 26);
   surface(ctx, w, d, style, rng);
+  // a touch of colour per building so the block isn't one flat grey slab
+  if (opts.tint) {
+    ctx.globalAlpha = 0.12;
+    px(ctx, 0, 0, w, d, opts.tint);
+    ctx.globalAlpha = 1;
+  }
   frontWall(ctx, w, wallH, rng, { wall: opts.wallColor, trim: opts.trimColor });
 
   // cables first: they run over the roof and behind the objects
@@ -717,7 +708,7 @@ export function makeRoof(opts) {
   for (const list of ['chimneys', 'skylights', 'acUnits', 'vents']) {
     if (opts[list]) opts[list] = opts[list].map((o) => ({ ...o, y: Math.max(o.y, roofMinY) }));
   }
-  if (opts.waterTower) objects.push({ y: opts.waterTower.y + 20, draw: () => waterTower(ctx, opts.waterTower.x, opts.waterTower.y + 96, rng, opts.waterTower.scale || 1) });
+  if (opts.waterTower) objects.push({ y: opts.waterTower.y + 8, draw: () => waterTower(ctx, opts.waterTower.x, opts.waterTower.y, rng, opts.waterTower.scale || 1) });
   if (opts.bulkhead) objects.push({ y: opts.bulkhead.y + 54, draw: () => bulkhead(ctx, opts.bulkhead.x, opts.bulkhead.y, opts.bulkhead.w || 78, opts.bulkhead.h || 54, rng, opts.bulkhead.palette) });
   if (opts.garden) objects.push({ y: opts.garden.y + opts.garden.h, draw: () => rooftopGarden(ctx, opts.garden.x, opts.garden.y, opts.garden.w, opts.garden.h, rng) });
   if (opts.antenna) objects.push({ y: opts.antenna.y, draw: () => antenna(ctx, opts.antenna.x, opts.antenna.y, rng) });
@@ -736,38 +727,16 @@ export function makeRoof(opts) {
   for (const o of objects) o.draw();
   ctx.restore();
 
-  // soft shadow the wall throws onto the roof
-  const wg = ctx.createLinearGradient(0, wallH, 0, wallH + 26);
-  wg.addColorStop(0, 'rgba(7,5,12,0.55)');
-  wg.addColorStop(0.55, 'rgba(7,5,12,0.22)');
-  wg.addColorStop(1, 'rgba(7,5,12,0)');
-  ctx.fillStyle = wg;
-  ctx.fillRect(0, wallH, w, 26);
+  // parapet, gutter and the shadow it throws onto the roof plane
+  roofEdge(ctx, w, wallH, rng);
 
   // side walls last so objects can't cover them
   sideEdges(ctx, w, d);
 
   if (opts.sign) {
-    const sc = opts.sign.scale || 2;
-    const sx = opts.sign.x ?? Math.round(w / 2);
-    const tw = textWidth(opts.sign.text, sc);
-    const ph = 7 * sc + 12;
-    const px0 = Math.round(sx - (tw + 22) / 2);
-    const py0 = Math.round(wallH * 0.52 - ph / 2);
-    // backer plate bolted onto the wall
-    px(ctx, px0, py0, tw + 22, ph, '#15121a');
-    px(ctx, px0 + 2, py0 + 2, tw + 18, ph - 4, '#221c26');
-    px(ctx, px0, py0, tw + 22, 1, '#4a3f48');
-    px(ctx, px0, py0 + ph - 1, tw + 22, 1, '#08060b');
-    for (const bx of [px0 + 4, px0 + tw + 14]) px(ctx, bx, py0 + 3, 2, 2, '#5a5464');
-    // glow
-    const g = ctx.createRadialGradient(sx, py0 + ph / 2, 2, sx, py0 + ph / 2, tw * 0.85);
-    g.addColorStop(0, rgba(opts.sign.color || C.neonPink, 0.20));
-    g.addColorStop(1, rgba(opts.sign.color || C.neonPink, 0));
-    ctx.fillStyle = g;
-    ctx.fillRect(sx - tw, py0 - 24, tw * 2, ph + 48);
-    drawText(ctx, opts.sign.text, px0 + 12, py0 + 6, '#0d0a10', sc);
-    drawText(ctx, opts.sign.text, px0 + 11, py0 + 5, opts.sign.color || C.neonPink, sc);
+    // rooftop neon: stands on the roof just behind the parapet, so the block reads
+    // as a silhouette of roofs rather than a wall with shop signs.
+    roofSign(ctx, opts.sign.x ?? Math.round(w / 2), wallH + 34, opts.sign.text, opts.sign.color || C.neonPink, opts.sign.scale || 2);
   }
 
   // bottom edge: the back of the roof with a dark parapet + silhouette of the next block

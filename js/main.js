@@ -297,7 +297,6 @@ function loop(now) {
   renderer.drawLighting(ctx, world, collectLights(state.time), state.time, state.player);
   renderer.drawPost(ctx, state.viewW, state.viewH, state.time);
 
-  ctx = canvas.getContext('2d');
   const hours = Math.floor(state.clockMinutes / 60);
   const mins = Math.floor(state.clockMinutes % 60);
   const clockString = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
