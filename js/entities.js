@@ -93,7 +93,7 @@ export class Player {
   }
 }
 
-const NPC_NAMES = ['npc1', 'npc2', 'npc3', 'npc4', 'npc5'];
+const NPC_NAMES = ['npc1', 'npc2', 'npc3', 'npc4', 'npc5', 'npc6', 'npc7', 'npc8', 'npc9', 'npc10', 'npc11', 'npc12'];
 const IDLE_SPOTS = [
   [760, 470, 'down'], [980, 300, 'down'], [1380, 486, 'left'], [1700, 452, 'down'],
   [2140, 320, 'right'], [520, 400, 'down'], [430, 520, 'left'], [1900, 540, 'up'],
