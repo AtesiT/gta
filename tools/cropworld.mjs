@@ -1,0 +1,13 @@
+import { createCanvas } from '@napi-rs/canvas';
+import { writeFileSync, mkdirSync } from 'node:fs';
+globalThis.__createCanvas = (w, h) => createCanvas(Math.ceil(w), Math.ceil(h));
+const { buildStreet, WORLD } = await import('../js/art/street.js');
+const w = buildStreet();
+const [x, y, cw, ch, scale, name] = process.argv.slice(2);
+const c = createCanvas(Number(cw) * Number(scale), Number(ch) * Number(scale));
+const ctx = c.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+ctx.drawImage(w.canvas, Number(x), Number(y), Number(cw), Number(ch), 0, 0, c.width, c.height);
+mkdirSync('tools/out', { recursive: true });
+writeFileSync('tools/out/' + name + '.png', c.toBuffer('image/png'));
+console.log('ok', name);
